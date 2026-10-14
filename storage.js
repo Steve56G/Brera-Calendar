@@ -4,7 +4,8 @@
 //   @orario/schedule   -> scheduleMatrix estratta dal PDF (serve per ricostruire il calendario al riavvio)
 //   @orario/fileName   -> nome del PDF importato
 //   @orario/favorites  -> array di id dei corsi preferiti
-//   @orario/edits      -> { [chiaveEvento]: { subject, details, start, end, startLabel, endLabel } }
+//   @orario/edits      -> { [chiaveEvento]: { subject, details, note, start, end, startLabel, endLabel } }
+//   @orario/courseColors -> { [idCorso]: colore esadecimale }
 // Preferiti e modifiche sono legati agli id/chiavi dello schedule salvato: vengono azzerati insieme
 // quando si importa un nuovo PDF (comportamento già presente in App.js).
 
@@ -49,7 +50,7 @@ export function usePersistentState(key, initial, { encode = (v) => v, decode = (
 }
 
 // Elimina tutti i dati locali del calendario
-const KEYS = ['schedule', 'fileName', 'favorites', 'edits'];
+const KEYS = ['schedule', 'fileName', 'favorites', 'edits', 'courseColors'];
 export const clearCalendarData = () => AsyncStorage.multiRemove(KEYS.map((k) => PREFIX + k));
 
 // Codifica/decodifica per i Set

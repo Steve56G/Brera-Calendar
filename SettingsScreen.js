@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Alert, Image, Linking, Modal, Platform, Pressable, StatusBar, StyleSheet, Text, View } from 'react-native';
 import Constants from 'expo-constants';
 
@@ -25,10 +25,6 @@ function Header({ title, onBack }) {
  */
 export default function SettingsScreen({ visible, onClose, onClearCalendar }) {
   const [page, setPage] = useState('menu'); // 'menu' | 'general' | 'about'
-
-  useEffect(() => {
-    if (visible) setPage('menu');
-  }, [visible]);
 
   const goBack = () => (page === 'menu' ? onClose() : setPage('menu'));
 

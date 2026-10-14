@@ -13,7 +13,7 @@ const HOURS = Array.from({ length: END_H - START_H + 1 }, (_, i) => START_H + i)
 
 const pad = (h) => `${String(h).padStart(2, '0')}:00`;
 
-export default function CalendarView({ schedule, favorites, onToggle, edits = {}, onEdit }) {
+export default function CalendarView({ schedule, favorites, onToggle, edits = {}, courseColors = {}, onEdit, onSetCourseColor }) {
   const { width } = useWindowDimensions();
   const [showRi, setShowRi] = useState(false);
   const [editing, setEditing] = useState(null); // evento aperto nel modal di modifica
@@ -37,8 +37,18 @@ export default function CalendarView({ schedule, favorites, onToggle, edits = {}
       });
     });
     // applica le modifiche manuali (titolo/orario) prima di calcolare le sovrapposizioni
-    return days.map((evs) => layoutDay(evs.map((e) => (edits[e.key] ? { ...e, ...edits[e.key] } : e))));
-  }, [favRows, showRi, edits]);
+    return days.map((evs) =>
+      layoutDay(
+        evs
+          .filter((e) => !edits[e.key]?.deleted)
+          .map((e) => ({
+            ...e,
+            ...(edits[e.key] || {}),
+            color: courseColors[e.rowId],
+          }))
+      )
+    );
+  }, [favRows, showRi, edits, courseColors]);
 
   const baseW = Math.max(MIN_COL, (width - 32 - GUTTER) / 6);
   const dayW = perDay.map((evs) => Math.max(baseW, maxCols(evs) * MIN_SUB));
@@ -141,11 +151,18 @@ export default function CalendarView({ schedule, favorites, onToggle, edits = {}
       </ScrollView>
 
       <LessonEditModal
+        key={editing?.key ?? 'closed'}
         visible={!!editing}
         lesson={editing}
+        color={courseColors[editing?.rowId]}
         onCancel={() => setEditing(null)}
+        onDelete={(lesson) => {
+          onEdit?.(lesson.key, { ...(edits[lesson.key] || {}), deleted: true });
+          setEditing(null);
+        }}
         onSave={(u) => {
-          onEdit?.(u.key, { subject: u.subject, details: u.details, start: u.start, end: u.end, startLabel: u.startLabel, endLabel: u.endLabel });
+          onEdit?.(u.key, { subject: u.subject, details: u.details, note: u.note, start: u.start, end: u.end, startLabel: u.startLabel, endLabel: u.endLabel });
+          onSetCourseColor?.(u.rowId, u.color);
           setEditing(null);
         }}
       />
@@ -184,8 +201,8 @@ const EventBox = React.memo(function EventBox({ ev, colW, onRemove, onEdit }) {
           width: subW - 4,
           top: (ev.start - START_H) * HOUR_H + 1,
           height: h,
-          backgroundColor: bg,
-          borderColor: border,
+          backgroundColor: ev.color || bg,
+          borderColor: ev.color || border,
           borderStyle: isRi ? 'dashed' : 'solid',
         },
       ]}

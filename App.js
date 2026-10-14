@@ -1,4 +1,4 @@
-import React, { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useDeferredValue, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -19,13 +19,14 @@ import { parseSchedule, norm, DAY_SHORT, LEVEL_HEX } from './parser';
 import CalendarView from './CalendarView';
 import { usePersistentState, setCodec, clearCalendarData } from './storage';
 import SettingsScreen from './SettingsScreen';
+import ProfileScreen from './ProfileScreen';
 
 // SDK 54+: la vecchia API (readAsStringAsync, copyAsync...) sta in 'expo-file-system/legacy'.
 // Su SDK precedenti il fallback usa il modulo principale.
 let FileSystem;
 try {
   FileSystem = require('expo-file-system/legacy');
-} catch (e) {
+} catch (_e) {
   FileSystem = require('expo-file-system');
 }
 
@@ -166,17 +167,30 @@ export default function App() {
   const deferredQuery = useDeferredValue(query);
   const [tab, setTab] = useState('calendar'); // 'list' | 'calendar' -- il Calendario è la schermata iniziale
   const [showSettings, setShowSettings] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
+  const [studentProfile, setStudentProfile, profileLoaded] = usePersistentState('studentProfile', {
+    firstName: '',
+    lastName: '',
+    institutionalEmail: '',
+    studentId: '',
+    degreeCourse: '',
+  });
   const [favorites, setFavorites, favLoaded] = usePersistentState('favorites', () => new Set(), setCodec);
   const [edits, setEdits, editsLoaded] = usePersistentState('edits', {}); // modifiche manuali alle lezioni, per chiave evento
-  const loaded = nameLoaded && scheduleLoaded && favLoaded && editsLoaded;
+  const [courseColors, setCourseColors, courseColorsLoaded] = usePersistentState('courseColors', {});
+  const loaded = nameLoaded && scheduleLoaded && favLoaded && editsLoaded && courseColorsLoaded && profileLoaded;
 
-  // al riavvio, se c'è un orario salvato, si va direttamente alla lista
-  useEffect(() => {
-    if (loaded && schedule.length > 0) setStatus((s) => (s === 'idle' ? 'ready' : s));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loaded]);
+  const visibleStatus = status === 'idle' && loaded && schedule.length > 0 ? 'ready' : status;
 
-  const editLesson = useCallback((key, patch) => setEdits((prev) => ({ ...prev, [key]: patch })), []);
+  const editLesson = useCallback((key, patch) => setEdits((prev) => ({ ...prev, [key]: patch })), [setEdits]);
+  const setCourseColor = useCallback((courseId, color) => {
+    setCourseColors((prev) => {
+      const next = { ...prev };
+      if (color) next[courseId] = color;
+      else delete next[courseId];
+      return next;
+    });
+  }, [setCourseColors]);
 
   const toggleFav = useCallback((id) => {
     setFavorites((prev) => {
@@ -185,7 +199,7 @@ export default function App() {
       else next.add(id);
       return next;
     });
-  }, []);
+  }, [setFavorites]);
 
   const webRef = useRef(null);
   const pagesRef = useRef([]);
@@ -229,7 +243,7 @@ export default function App() {
     } catch (e) {
       fail(`Impossibile aprire il file: ${e?.message || e}`);
     }
-  }, [fail]);
+  }, [fail, setFileName]);
 
   const onWebLoaded = useCallback(() => {
     if (startedRef.current || !pdfB64) return;
@@ -261,6 +275,7 @@ export default function App() {
             setSchedule(scheduleMatrix);
             setFavorites(new Set());
             setEdits({});
+            setCourseColors({});
             setDebugInfo(debug);
             setPdfB64(null);
             setQuery('');
@@ -273,7 +288,7 @@ export default function App() {
         fail(msg.message || 'Errore sconosciuto durante la lettura del PDF.');
       }
     },
-    [fail]
+    [fail, setCourseColors, setEdits, setFavorites, setSchedule]
   );
 
   const filtered = useMemo(() => {
@@ -288,10 +303,11 @@ export default function App() {
     setFileName('');
     setFavorites(new Set());
     setEdits({});
+    setCourseColors({});
     setStatus('idle');
     setQuery('');
     await clearCalendarData();
-  }, [setSchedule, setFileName, setFavorites, setEdits]);
+  }, [setSchedule, setFileName, setFavorites, setEdits, setCourseColors]);
 
   const renderItem = useCallback(
     ({ item }) => <ScheduleCard item={item} isFav={favorites.has(item.id)} onToggle={toggleFav} />,
@@ -313,16 +329,21 @@ export default function App() {
 
       <View style={styles.header}>
         <Text style={styles.title}>Orario</Text>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
-          {status === 'ready' && (
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          {visibleStatus === 'ready' && (
             <Pressable onPress={() => setShowDebug(true)} hitSlop={10}>
               <Text style={styles.debugLink}>Diagnostica</Text>
             </Pressable>
           )}
           {tab === 'list' && (
-            <Pressable onPress={() => setShowSettings(true)} hitSlop={10}>
-              <Text style={styles.debugLink}>Impostazioni</Text>
-            </Pressable>
+            <>
+              <Pressable onPress={() => setShowProfile(true)} hitSlop={10} accessibilityRole="button" accessibilityLabel="Apri profilo studente">
+                <Text style={styles.debugLink}>Profilo</Text>
+              </Pressable>
+              <Pressable onPress={() => setShowSettings(true)} hitSlop={10} accessibilityRole="button" accessibilityLabel="Apri impostazioni">
+                <Text style={styles.debugLink}>Impostazioni</Text>
+              </Pressable>
+            </>
           )}
         </View>
       </View>
@@ -330,20 +351,20 @@ export default function App() {
       {tab === 'list' && (
         <>
       <Pressable
-        style={({ pressed }) => [styles.primaryBtn, pressed && { opacity: 0.85 }, status === 'loading' && { opacity: 0.6 }]}
+        style={({ pressed }) => [styles.primaryBtn, pressed && { opacity: 0.85 }, visibleStatus === 'loading' && { opacity: 0.6 }]}
         onPress={pickPdf}
-        disabled={status === 'loading'}
+        disabled={visibleStatus === 'loading'}
       >
-        <Text style={styles.primaryBtnText}>{status === 'ready' ? 'Carica un altro PDF' : 'Seleziona PDF dell’orario'}</Text>
+        <Text style={styles.primaryBtnText}>{visibleStatus === 'ready' ? 'Carica un altro PDF' : 'Seleziona PDF dell’orario'}</Text>
       </Pressable>
 
-      {status === 'idle' && (
+      {visibleStatus === 'idle' && (
         <View style={styles.center}>
           <Text style={styles.hint}>Importa il PDF dell’orario per cercare materie e docenti.</Text>
         </View>
       )}
 
-      {status === 'loading' && (
+      {visibleStatus === 'loading' && (
         <View style={styles.center}>
           <ActivityIndicator size="large" color="#2563EB" />
           <Text style={styles.hint}>{progress}</Text>
@@ -351,14 +372,14 @@ export default function App() {
         </View>
       )}
 
-      {status === 'error' && (
+      {visibleStatus === 'error' && (
         <View style={styles.center}>
           <Text style={styles.errorTitle}>Qualcosa è andato storto</Text>
           <Text style={styles.hint}>{errorMsg}</Text>
         </View>
       )}
 
-      {status === 'ready' && (
+      {visibleStatus === 'ready' && (
         <>
           <TextInput
             style={styles.search}
@@ -404,7 +425,7 @@ export default function App() {
         </>
       )}
 
-      {tab === 'calendar' && <CalendarView schedule={schedule} favorites={favorites} onToggle={toggleFav} edits={edits} onEdit={editLesson} />}
+      {tab === 'calendar' && <CalendarView schedule={schedule} favorites={favorites} onToggle={toggleFav} edits={edits} courseColors={courseColors} onEdit={editLesson} onSetCourseColor={setCourseColor} />}
 
       {/* WebView nascosta: esegue pdf.js solo durante l'importazione */}
       {pdfB64 && (
@@ -433,7 +454,14 @@ export default function App() {
         </Pressable>
       </View>
 
-      <SettingsScreen visible={showSettings} onClose={() => setShowSettings(false)} onClearCalendar={handleClearCalendar} />
+      <SettingsScreen key={`settings-${showSettings ? 'open' : 'closed'}`} visible={showSettings} onClose={() => setShowSettings(false)} onClearCalendar={handleClearCalendar} />
+      <ProfileScreen
+        key={`profile-${showProfile ? 'open' : 'closed'}`}
+        visible={showProfile}
+        profile={studentProfile}
+        onClose={() => setShowProfile(false)}
+        onSave={setStudentProfile}
+      />
 
       <Modal visible={showDebug} animationType="slide" onRequestClose={() => setShowDebug(false)}>
         <View style={styles.modal}>
