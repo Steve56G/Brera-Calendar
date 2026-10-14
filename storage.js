@@ -6,6 +6,7 @@
 //   @orario/favorites  -> array di id dei corsi preferiti
 //   @orario/edits      -> { [chiaveEvento]: { subject, professor, details, note, start, end, startLabel, endLabel } }
 //   @orario/courseColors -> { [idCorso]: colore esadecimale }
+//   @orario/changes    -> { [idCorso]: string[] } differenze trovate con "Aggiorna calendario" (avviso ⚠️)
 // Le modifiche e i colori di un corso vengono eliminati quando il corso viene rimosso dai preferiti;
 // vengono inoltre azzerati quando si importa un nuovo PDF.
 
@@ -50,8 +51,10 @@ export function usePersistentState(key, initial, { encode = (v) => v, decode = (
 }
 
 // Elimina tutti i dati locali del calendario
-const KEYS = ['schedule', 'fileName', 'favorites', 'edits', 'courseColors'];
+const KEYS = ['schedule', 'fileName', 'favorites', 'edits', 'courseColors', 'changes'];
 export const clearCalendarData = () => AsyncStorage.multiRemove(KEYS.map((k) => PREFIX + k));
 
 // Codifica/decodifica per i Set
 export const setCodec = { encode: (s) => [...s], decode: (a) => new Set(a) };
+
+

@@ -1,6 +1,7 @@
 import React, { useCallback, useDeferredValue, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
   Modal,
   Platform,
@@ -20,6 +21,7 @@ import CalendarView from './CalendarView';
 import { usePersistentState, setCodec, clearCalendarData } from './storage';
 import SettingsScreen from './SettingsScreen';
 import ProfileScreen from './ProfileScreen';
+import { mergeSchedules } from './updateMerge';
 
 // SDK 54+: la vecchia API (readAsStringAsync, copyAsync...) sta in 'expo-file-system/legacy'.
 // Su SDK precedenti il fallback usa il modulo principale.
@@ -31,6 +33,21 @@ try {
 }
 
 const TIMEOUT_MS = 90000;
+
+// Con un calendario già presente chiede come importare il nuovo PDF
+const askImportMode = () =>
+  new Promise((resolve) => {
+    Alert.alert(
+      'Nuovo orario',
+      'Esiste già un calendario. Cosa vuoi fare?',
+      [
+        { text: 'Annulla', style: 'cancel', onPress: () => resolve('cancel') },
+        { text: 'Pulisci calendario', style: 'destructive', onPress: () => resolve('replace') },
+        { text: 'Aggiorna calendario', onPress: () => resolve('update') },
+      ],
+      { cancelable: true, onDismiss: () => resolve('cancel') }
+    );
+  });
 
 // Legge il PDF in base64 provando più strategie (il picker di solito ha già
 // copiato il file nella cache, quindi la copia manuale non è sempre necessaria).
@@ -74,7 +91,7 @@ async function readPdfBase64(asset) {
 
 /* ------------------------------ Card ------------------------------ */
 
-const ScheduleCard = React.memo(function ScheduleCard({ item, isFav, onToggle }) {
+const ScheduleCard = React.memo(function ScheduleCard({ item, isFav, onToggle, changes, onShowChanges }) {
   // Triennio = verde fluo #99CC00, Biennio = blu #99CCFF
   const levelHex = LEVEL_HEX[item.level];
   const bg = levelHex || '#E5E7EB';
@@ -148,6 +165,18 @@ const ScheduleCard = React.memo(function ScheduleCard({ item, isFav, onToggle })
           ))
         )}
       </View>
+
+      {isFav && !!changes?.length && (
+        <Pressable
+          onPress={() => onShowChanges(item.id)}
+          hitSlop={10}
+          style={styles.changedBtn}
+          accessibilityRole="button"
+          accessibilityLabel="Dati cambiati rispetto al PDF precedente"
+        >
+          <Text style={styles.changedIcon}>⚠️</Text>
+        </Pressable>
+      )}
     </View>
   );
 });
@@ -178,7 +207,8 @@ export default function App() {
   const [favorites, setFavorites, favLoaded] = usePersistentState('favorites', () => new Set(), setCodec);
   const [edits, setEdits, editsLoaded] = usePersistentState('edits', {}); // modifiche manuali alle lezioni, per chiave evento
   const [courseColors, setCourseColors, courseColorsLoaded] = usePersistentState('courseColors', {});
-  const loaded = nameLoaded && scheduleLoaded && favLoaded && editsLoaded && courseColorsLoaded && profileLoaded;
+  const [changes, setChanges, changesLoaded] = usePersistentState('changes', {}); // differenze trovate in "Aggiorna calendario"
+  const loaded = nameLoaded && scheduleLoaded && favLoaded && editsLoaded && courseColorsLoaded && changesLoaded && profileLoaded;
 
   const visibleStatus = status === 'idle' && loaded && schedule.length > 0 ? 'ready' : status;
 
@@ -215,12 +245,19 @@ export default function App() {
         delete next[id];
         return next;
       });
+      setChanges((prev) => {
+        if (!(id in prev)) return prev;
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
     }
-  }, [favorites, setFavorites, setEdits, setCourseColors]);
+  }, [favorites, setFavorites, setEdits, setCourseColors, setChanges]);
 
   const webRef = useRef(null);
   const pagesRef = useRef([]);
   const startedRef = useRef(false);
+  const importModeRef = useRef('replace'); // 'replace' | 'update'
   const timerRef = useRef(null);
 
   const fail = useCallback((msg) => {
@@ -239,6 +276,13 @@ export default function App() {
       });
       if (res.canceled || !res.assets?.length) return;
       const asset = res.assets[0];
+
+      let mode = 'replace';
+      if (schedule.length > 0) {
+        mode = await askImportMode();
+        if (mode === 'cancel') return;
+      }
+      importModeRef.current = mode;
 
       setStatus('loading');
       setErrorMsg('');
@@ -260,7 +304,7 @@ export default function App() {
     } catch (e) {
       fail(`Impossibile aprire il file: ${e?.message || e}`);
     }
-  }, [fail, setFileName]);
+  }, [fail, setFileName, schedule]);
 
   const onWebLoaded = useCallback(() => {
     if (startedRef.current || !pdfB64) return;
@@ -289,10 +333,24 @@ export default function App() {
         setTimeout(() => {
           try {
             const { scheduleMatrix, debug } = parseSchedule([...pagesRef.current]);
-            setSchedule(scheduleMatrix);
-            setFavorites(new Set());
-            setEdits({});
-            setCourseColors({});
+            if (importModeRef.current === 'update') {
+              if (!scheduleMatrix.length) throw new Error('nessuna riga riconosciuta nel PDF, calendario non modificato');
+              const merged = mergeSchedules(schedule, scheduleMatrix, favorites, edits, courseColors);
+              setSchedule(scheduleMatrix);
+              setFavorites(merged.favorites);
+              setEdits(merged.edits);
+              setCourseColors(merged.courseColors);
+              setChanges(merged.changes);
+              if (merged.missing) {
+                Alert.alert('Calendario aggiornato', `${merged.missing} corso/i preferito/i non presente/i nel nuovo PDF rimosso/i dai preferiti.`);
+              }
+            } else {
+              setSchedule(scheduleMatrix);
+              setFavorites(new Set());
+              setEdits({});
+              setCourseColors({});
+              setChanges({});
+            }
             setDebugInfo(debug);
             setPdfB64(null);
             setQuery('');
@@ -305,7 +363,7 @@ export default function App() {
         fail(msg.message || 'Errore sconosciuto durante la lettura del PDF.');
       }
     },
-    [fail, setCourseColors, setEdits, setFavorites, setSchedule]
+    [fail, schedule, favorites, edits, courseColors, setCourseColors, setEdits, setFavorites, setSchedule, setChanges]
   );
 
   const filtered = useMemo(() => {
@@ -321,14 +379,39 @@ export default function App() {
     setFavorites(new Set());
     setEdits({});
     setCourseColors({});
+    setChanges({});
     setStatus('idle');
     setQuery('');
     await clearCalendarData();
-  }, [setSchedule, setFileName, setFavorites, setEdits, setCourseColors]);
+  }, [setSchedule, setFileName, setFavorites, setEdits, setCourseColors, setChanges]);
+
+  const showChanges = useCallback(
+    (id) => {
+      const list = changes[id];
+      if (!list) return;
+      Alert.alert('Dati cambiati rispetto al PDF precedente', list.join('\n'), [
+        { text: 'Chiudi', style: 'cancel' },
+        {
+          text: 'Segna come verificato',
+          onPress: () =>
+            setChanges((prev) => {
+              const next = { ...prev };
+              delete next[id];
+              return next;
+            }),
+        },
+      ]);
+    },
+    [changes, setChanges]
+  );
+
+  const listExtra = useMemo(() => ({ favorites, changes }), [favorites, changes]);
 
   const renderItem = useCallback(
-    ({ item }) => <ScheduleCard item={item} isFav={favorites.has(item.id)} onToggle={toggleFav} />,
-    [favorites, toggleFav]
+    ({ item }) => (
+      <ScheduleCard item={item} isFav={favorites.has(item.id)} onToggle={toggleFav} changes={changes[item.id]} onShowChanges={showChanges} />
+    ),
+    [favorites, toggleFav, changes, showChanges]
   );
   const keyExtractor = useCallback((item) => item.id, []);
 
@@ -417,7 +500,7 @@ export default function App() {
           <FlatList
             data={filtered}
             renderItem={renderItem}
-            extraData={favorites}
+            extraData={listExtra}
             keyExtractor={keyExtractor}
             keyboardShouldPersistTaps="handled"
             contentContainerStyle={{ paddingBottom: 32 }}
@@ -522,6 +605,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff', borderRadius: 14, padding: 14, marginBottom: 10, borderWidth: 2,
     shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 2,
   },
+  changedBtn: { alignSelf: 'flex-end', marginTop: 8 },
+  changedIcon: { fontSize: 22 },
   cardHead: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
   star: { fontSize: 28, lineHeight: 30, color: '#9CA3AF' },
   starOn: { color: '#F59E0B' },
@@ -556,3 +641,6 @@ const styles = StyleSheet.create({
   modal: { flex: 1, backgroundColor: '#fff', padding: 16, paddingTop: (StatusBar.currentHeight || 0) + 16 },
   mono: { fontFamily: Platform.OS === 'android' ? 'monospace' : 'Menlo', fontSize: 11, color: '#111827' },
 });
+
+
+
