@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Alert, Animated, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { DAYS, DAY_SHORT, LEVEL_HEX } from './parser';
 import { END_H, START_H, layoutDay, maxCols } from './calendarLayout';
+import LessonEditModal from './LessonEditModal';
 
 const HOUR_H = 64; // altezza di un'ora (px)
 const GUTTER = 46; // larghezza colonna orari
@@ -12,9 +13,11 @@ const HOURS = Array.from({ length: END_H - START_H + 1 }, (_, i) => START_H + i)
 
 const pad = (h) => `${String(h).padStart(2, '0')}:00`;
 
-export default function CalendarView({ schedule, favorites, onToggle }) {
+export default function CalendarView({ schedule, favorites, onToggle, edits = {}, onEdit }) {
   const { width } = useWindowDimensions();
   const [showRi, setShowRi] = useState(false);
+  const [editing, setEditing] = useState(null); // evento aperto nel modal di modifica
+  const [horizontalOffset] = useState(() => new Animated.Value(0));
 
   const favRows = useMemo(() => schedule.filter((r) => favorites.has(r.id)), [schedule, favorites]);
 
@@ -33,8 +36,9 @@ export default function CalendarView({ schedule, favorites, onToggle }) {
         }
       });
     });
-    return days.map(layoutDay);
-  }, [favRows, showRi]);
+    // applica le modifiche manuali (titolo/orario) prima di calcolare le sovrapposizioni
+    return days.map((evs) => layoutDay(evs.map((e) => (edits[e.key] ? { ...e, ...edits[e.key] } : e))));
+  }, [favRows, showRi, edits]);
 
   const baseW = Math.max(MIN_COL, (width - 32 - GUTTER) / 6);
   const dayW = perDay.map((evs) => Math.max(baseW, maxCols(evs) * MIN_SUB));
@@ -52,25 +56,50 @@ export default function CalendarView({ schedule, favorites, onToggle }) {
         </Pressable>
       </View>
 
-      <View style={styles.legend}>
-        <View style={[styles.dot, { backgroundColor: LEVEL_HEX.Triennio }]} />
-        <Text style={styles.legendText}>Triennio</Text>
-        <View style={[styles.dot, { backgroundColor: LEVEL_HEX.Biennio }]} />
-        <Text style={styles.legendText}>Biennio</Text>
-      </View>
-
       {favRows.length === 0 && (
         <Text style={styles.hint}>
           Nessun corso nei preferiti. Tocca la stella ☆ su un corso nella lista: tutte le sue lezioni compariranno qui.
         </Text>
       )}
-      {favRows.length > 0 && <Text style={styles.tip}>Tieni premuto un box per rimuovere il corso dai preferiti.</Text>}
+      {favRows.length > 0 && <Text style={styles.tip}>Tocca un box per modificarlo. Tieni premuto per rimuovere il corso dai preferiti.</Text>}
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 24 }}
+        stickyHeaderIndices={[0]}
+      >
+        <View style={styles.stickyDayHeader}>
+          <View style={styles.stickyDaysArea}>
+            <Animated.View
+              style={[
+                styles.stickyDaysContent,
+                {
+                  width: totalW,
+                  transform: [
+                    {
+                      translateX: horizontalOffset.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [0, -1],
+                      }),
+                    },
+                  ],
+                },
+              ]}
+            >
+              {DAYS.map((d, i) => (
+                <View key={d} style={{ width: dayW[i], height: HEADER_H, alignItems: 'center', justifyContent: 'center' }}>
+                  <View style={[styles.dayPill, { width: dayW[i] - 12 }]}>
+                    <Text style={styles.dayPillText}>{DAY_SHORT[i]}</Text>
+                  </View>
+                </View>
+              ))}
+            </Animated.View>
+          </View>
+        </View>
+
         <View style={{ flexDirection: 'row' }}>
           {/* colonna orari */}
-          <View style={{ width: GUTTER }}>
-            <View style={{ height: HEADER_H }} />
+          <View style={{ width: GUTTER, flexShrink: 0 }}>
             <View style={{ height: bodyH + 12 }}>
               {HOURS.map((h) => (
                 <Text key={h} style={[styles.hourLabel, { top: (h - START_H) * HOUR_H - 7 }]}>
@@ -81,18 +110,15 @@ export default function CalendarView({ schedule, favorites, onToggle }) {
           </View>
 
           {/* giorni */}
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <Animated.ScrollView
+            style={{ flex: 1 }}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            bounces={false}
+            scrollEventThrottle={16}
+            onScroll={Animated.event([{ nativeEvent: { contentOffset: { x: horizontalOffset } } }], { useNativeDriver: true })}
+          >
             <View style={{ width: totalW }}>
-              <View style={{ flexDirection: 'row', height: HEADER_H }}>
-                {DAYS.map((d, i) => (
-                  <View key={d} style={{ width: dayW[i], alignItems: 'center', justifyContent: 'center' }}>
-                    <View style={styles.dayPill}>
-                      <Text style={styles.dayPillText}>{DAY_SHORT[i]}</Text>
-                    </View>
-                  </View>
-                ))}
-              </View>
-
               <View style={{ height: bodyH }}>
                 {/* linee orarie */}
                 {HOURS.map((h) => (
@@ -103,23 +129,33 @@ export default function CalendarView({ schedule, favorites, onToggle }) {
                   {perDay.map((evs, di) => (
                     <View key={di} style={[styles.dayCol, { width: dayW[di], height: bodyH }]}>
                       {evs.map((ev) => (
-                        <EventBox key={ev.key} ev={ev} colW={dayW[di]} onRemove={onToggle} />
+                        <EventBox key={ev.key} ev={ev} colW={dayW[di]} onRemove={onToggle} onEdit={setEditing} />
                       ))}
                     </View>
                   ))}
                 </View>
               </View>
             </View>
-          </ScrollView>
+          </Animated.ScrollView>
         </View>
       </ScrollView>
+
+      <LessonEditModal
+        visible={!!editing}
+        lesson={editing}
+        onCancel={() => setEditing(null)}
+        onSave={(u) => {
+          onEdit?.(u.key, { subject: u.subject, details: u.details, start: u.start, end: u.end, startLabel: u.startLabel, endLabel: u.endLabel });
+          setEditing(null);
+        }}
+      />
     </View>
   );
 }
 
 const pick = (s) => ({ start: s.start, end: s.end, startLabel: s.startLabel, endLabel: s.endLabel, details: s.details });
 
-const EventBox = React.memo(function EventBox({ ev, colW, onRemove }) {
+const EventBox = React.memo(function EventBox({ ev, colW, onRemove, onEdit }) {
   const subW = colW / ev.cols;
   const h = (ev.end - ev.start) * HOUR_H - 2;
   const isRi = ev.kind === 'ricevimento';
@@ -129,7 +165,17 @@ const EventBox = React.memo(function EventBox({ ev, colW, onRemove }) {
   const lines = Math.max(1, Math.floor((h - 18) / 13));
   return (
     <Pressable
-      onLongPress={() => onRemove(ev.rowId)}
+      onPress={() => onEdit(ev)}
+      onLongPress={() =>
+        Alert.alert(
+          'Rimuovere il corso dai preferiti?',
+          `Vuoi rimuovere ${ev.subject} dai preferiti? Tutte le sue lezioni scompariranno dal calendario.`,
+          [
+            { text: 'Annulla', style: 'cancel' },
+            { text: 'Rimuovi', style: 'destructive', onPress: () => onRemove(ev.rowId) },
+          ]
+        )
+      }
       delayLongPress={450}
       style={[
         styles.event,
@@ -173,6 +219,21 @@ const styles = StyleSheet.create({
   legendText: { fontSize: 12, color: '#374151', marginRight: 10 },
   hint: { color: '#6B7280', fontSize: 14, marginBottom: 10 },
   tip: { color: '#9CA3AF', fontSize: 11, marginBottom: 6 },
+  stickyDayHeader: {
+    flexDirection: 'row',
+    height: HEADER_H + 4,
+    paddingLeft: GUTTER,
+    zIndex: 10,
+    elevation: 6,
+  },
+  stickyDaysArea: {
+    flex: 1,
+    overflow: 'hidden',
+    backgroundColor: '#F9FAFB',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  stickyDaysContent: { flexDirection: 'row', height: HEADER_H },
   hourLabel: { position: 'absolute', right: 6, fontSize: 11, color: '#6B7280', fontWeight: '600' },
   hourLine: { position: 'absolute', left: 0, right: 0, height: 1, backgroundColor: '#E5E7EB' },
   dayPill: { backgroundColor: '#DBEAFE', borderRadius: 8, paddingVertical: 4, width: 44, alignItems: 'center' },

@@ -1,4 +1,4 @@
-import React, { useCallback, useDeferredValue, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -17,6 +17,8 @@ import { WebView } from 'react-native-webview';
 import { extractorHtml } from './pdfExtractor';
 import { parseSchedule, norm, DAY_SHORT, LEVEL_HEX } from './parser';
 import CalendarView from './CalendarView';
+import { usePersistentState, setCodec, clearCalendarData } from './storage';
+import SettingsScreen from './SettingsScreen';
 
 // SDK 54+: la vecchia API (readAsStringAsync, copyAsync...) sta in 'expo-file-system/legacy'.
 // Su SDK precedenti il fallback usa il modulo principale.
@@ -153,17 +155,28 @@ const ScheduleCard = React.memo(function ScheduleCard({ item, isFav, onToggle })
 
 export default function App() {
   const [status, setStatus] = useState('idle'); // idle | loading | ready | error
-  const [fileName, setFileName] = useState('');
+  const [fileName, setFileName, nameLoaded] = usePersistentState('fileName', '');
   const [progress, setProgress] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [pdfB64, setPdfB64] = useState(null);
-  const [schedule, setSchedule] = useState([]);
+  const [schedule, setSchedule, scheduleLoaded] = usePersistentState('schedule', []);
   const [debugInfo, setDebugInfo] = useState(null);
   const [showDebug, setShowDebug] = useState(false);
   const [query, setQuery] = useState('');
   const deferredQuery = useDeferredValue(query);
-  const [tab, setTab] = useState('list'); // 'list' | 'calendar'
-  const [favorites, setFavorites] = useState(() => new Set());
+  const [tab, setTab] = useState('calendar'); // 'list' | 'calendar' -- il Calendario è la schermata iniziale
+  const [showSettings, setShowSettings] = useState(false);
+  const [favorites, setFavorites, favLoaded] = usePersistentState('favorites', () => new Set(), setCodec);
+  const [edits, setEdits, editsLoaded] = usePersistentState('edits', {}); // modifiche manuali alle lezioni, per chiave evento
+  const loaded = nameLoaded && scheduleLoaded && favLoaded && editsLoaded;
+
+  // al riavvio, se c'è un orario salvato, si va direttamente alla lista
+  useEffect(() => {
+    if (loaded && schedule.length > 0) setStatus((s) => (s === 'idle' ? 'ready' : s));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loaded]);
+
+  const editLesson = useCallback((key, patch) => setEdits((prev) => ({ ...prev, [key]: patch })), []);
 
   const toggleFav = useCallback((id) => {
     setFavorites((prev) => {
@@ -247,6 +260,7 @@ export default function App() {
             const { scheduleMatrix, debug } = parseSchedule([...pagesRef.current]);
             setSchedule(scheduleMatrix);
             setFavorites(new Set());
+            setEdits({});
             setDebugInfo(debug);
             setPdfB64(null);
             setQuery('');
@@ -268,11 +282,30 @@ export default function App() {
     return schedule.filter((r) => tokens.every((t) => r.searchText.includes(t)));
   }, [schedule, deferredQuery]);
 
+  // elimina i dati locali del calendario e azzera lo stato in memoria
+  const handleClearCalendar = useCallback(async () => {
+    setSchedule([]);
+    setFileName('');
+    setFavorites(new Set());
+    setEdits({});
+    setStatus('idle');
+    setQuery('');
+    await clearCalendarData();
+  }, [setSchedule, setFileName, setFavorites, setEdits]);
+
   const renderItem = useCallback(
     ({ item }) => <ScheduleCard item={item} isFav={favorites.has(item.id)} onToggle={toggleFav} />,
     [favorites, toggleFav]
   );
   const keyExtractor = useCallback((item) => item.id, []);
+
+  if (!loaded) {
+    return (
+      <View style={[styles.root, styles.center]}>
+        <ActivityIndicator size="large" color="#2563EB" />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.root}>
@@ -280,11 +313,18 @@ export default function App() {
 
       <View style={styles.header}>
         <Text style={styles.title}>Orario</Text>
-        {status === 'ready' && (
-          <Pressable onPress={() => setShowDebug(true)} hitSlop={10}>
-            <Text style={styles.debugLink}>Diagnostica</Text>
-          </Pressable>
-        )}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+          {status === 'ready' && (
+            <Pressable onPress={() => setShowDebug(true)} hitSlop={10}>
+              <Text style={styles.debugLink}>Diagnostica</Text>
+            </Pressable>
+          )}
+          {tab === 'list' && (
+            <Pressable onPress={() => setShowSettings(true)} hitSlop={10}>
+              <Text style={styles.debugLink}>Impostazioni</Text>
+            </Pressable>
+          )}
+        </View>
       </View>
 
       {tab === 'list' && (
@@ -364,7 +404,7 @@ export default function App() {
         </>
       )}
 
-      {tab === 'calendar' && <CalendarView schedule={schedule} favorites={favorites} onToggle={toggleFav} />}
+      {tab === 'calendar' && <CalendarView schedule={schedule} favorites={favorites} onToggle={toggleFav} edits={edits} onEdit={editLesson} />}
 
       {/* WebView nascosta: esegue pdf.js solo durante l'importazione */}
       {pdfB64 && (
@@ -392,6 +432,8 @@ export default function App() {
           </Text>
         </Pressable>
       </View>
+
+      <SettingsScreen visible={showSettings} onClose={() => setShowSettings(false)} onClearCalendar={handleClearCalendar} />
 
       <Modal visible={showDebug} animationType="slide" onRequestClose={() => setShowDebug(false)}>
         <View style={styles.modal}>
