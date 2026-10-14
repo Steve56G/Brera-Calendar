@@ -70,6 +70,7 @@ function TimeField({ label, value, onChange }) {
  */
 export default function LessonEditModal({ visible, lesson, color, onSave, onDelete, onCancel }) {
   const [title, setTitle] = useState(() => lesson?.subject || '');
+  const [professor, setProfessor] = useState(() => lesson?.professor || '');
   const [room, setRoom] = useState(() => lesson?.details || '');
   const [note, setNote] = useState(() => lesson?.note || '');
   const [selectedColor, setSelectedColor] = useState(() => color || null);
@@ -86,7 +87,7 @@ export default function LessonEditModal({ visible, lesson, color, onSave, onDele
     if (s < MIN_H || e > MAX_H) return setError(`L'orario deve essere compreso tra ${fmt(MIN_H)} e ${fmt(MAX_H)}.`);
     if (e <= s) return setError("L'orario di fine deve essere successivo a quello di inizio.");
     setError('');
-    onSave({ ...lesson, subject: name, details: room.trim(), note, color: selectedColor, start: s, end: e, startLabel: fmt(s), endLabel: fmt(e) });
+    onSave({ ...lesson, subject: name, professor: professor.trim(), details: room.trim(), note, color: selectedColor, start: s, end: e, startLabel: fmt(s), endLabel: fmt(e) });
   };
 
   const confirmDelete = () => {
@@ -105,65 +106,84 @@ export default function LessonEditModal({ visible, lesson, color, onSave, onDele
       <KeyboardAvoidingView style={styles.overlay} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onCancel} />
         <View style={styles.sheet}>
-          <View style={styles.handle} />
-          <View style={styles.titleRow}>
-            <Text style={styles.heading}>Modifica lezione</Text>
-            <Pressable onPress={onCancel} hitSlop={10} accessibilityRole="button" accessibilityLabel="Annulla e chiudi">
-              <Text style={styles.cancelText}>Annulla</Text>
-            </Pressable>
+          <View style={styles.modalHeader}>
+            <View style={styles.handle} />
+            <View style={styles.titleRow}>
+              <Text style={styles.heading}>Modifica lezione</Text>
+              <Pressable onPress={onCancel} hitSlop={10} accessibilityRole="button" accessibilityLabel="Annulla e chiudi">
+                <Text style={styles.cancelText}>Annulla</Text>
+              </Pressable>
+            </View>
           </View>
 
-          <Text style={styles.label}>Titolo</Text>
-          <TextInput
-            style={styles.input}
-            value={title}
-            onChangeText={setTitle}
-            placeholder="Titolo della lezione"
-            placeholderTextColor="#9CA3AF"
-            returnKeyType="done"
-            multiline={false}
-          />
+          <ScrollView
+            style={styles.fieldsScroll}
+            contentContainerStyle={styles.fieldsContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator
+          >
+            <Text style={styles.label}>Titolo</Text>
+            <TextInput
+              style={styles.input}
+              value={title}
+              onChangeText={setTitle}
+              placeholder="Titolo della lezione"
+              placeholderTextColor="#9CA3AF"
+              returnKeyType="done"
+              multiline={false}
+            />
 
-          <Text style={styles.label}>Aula</Text>
-          <TextInput
-            style={styles.input}
-            value={room}
-            onChangeText={setRoom}
-            placeholder="Es. Aula 6"
-            placeholderTextColor="#9CA3AF"
-            returnKeyType="done"
-          />
+            <Text style={styles.label}>Professore</Text>
+            <TextInput
+              style={styles.input}
+              value={professor}
+              onChangeText={setProfessor}
+              placeholder="Nome del professore"
+              placeholderTextColor="#9CA3AF"
+              returnKeyType="done"
+            />
 
-          <Text style={styles.label}>Note</Text>
-          <View style={styles.noteBox}>
-            <ScrollView
-              style={styles.noteScroll}
-              nestedScrollEnabled
-              showsVerticalScrollIndicator
-              keyboardShouldPersistTaps="handled"
-            >
-              <TextInput
-                style={[styles.noteInput]}
-                value={note}
-                onChangeText={setNote}
-                placeholder="Aggiungi una nota"
-                placeholderTextColor="#9CA3AF"
-                multiline
-                numberOfLines={3}
-                textAlignVertical="top"
-              />
-            </ScrollView>
-          </View>
+            <Text style={styles.label}>Aula</Text>
+            <TextInput
+              style={styles.input}
+              value={room}
+              onChangeText={setRoom}
+              placeholder="Es. Aula 6"
+              placeholderTextColor="#9CA3AF"
+              returnKeyType="done"
+            />
 
-          <Text style={styles.label}>Colore del corso (tutte le lezioni)</Text>
-          <CourseColorSelector color={selectedColor} onChange={setSelectedColor} />
+            <Text style={styles.label}>Note</Text>
+            <View style={styles.noteBox}>
+              <ScrollView
+                style={styles.noteScroll}
+                nestedScrollEnabled
+                showsVerticalScrollIndicator
+                keyboardShouldPersistTaps="handled"
+              >
+                <TextInput
+                  style={styles.noteInput}
+                  value={note}
+                  onChangeText={setNote}
+                  placeholder="Aggiungi una nota"
+                  placeholderTextColor="#9CA3AF"
+                  multiline
+                  numberOfLines={3}
+                  textAlignVertical="top"
+                />
+              </ScrollView>
+            </View>
 
-          <View style={styles.timeRow}>
-            <TimeField label="Inizio" value={startT} onChange={setStartT} />
-            <TimeField label="Fine" value={endT} onChange={setEndT} />
-          </View>
+            <Text style={styles.label}>Colore del corso (tutte le lezioni)</Text>
+            <CourseColorSelector color={selectedColor} onChange={setSelectedColor} />
 
-          {!!error && <Text style={styles.error}>{error}</Text>}
+            <View style={styles.timeRow}>
+              <TimeField label="Inizio" value={startT} onChange={setStartT} />
+              <TimeField label="Fine" value={endT} onChange={setEndT} />
+            </View>
+
+            {!!error && <Text style={styles.error}>{error}</Text>}
+          </ScrollView>
 
           <View style={styles.actions}>
             <Pressable style={({ pressed }) => [styles.btn, styles.btnDanger, pressed && { opacity: 0.8 }]} onPress={confirmDelete}>
@@ -181,11 +201,14 @@ export default function LessonEditModal({ visible, lesson, color, onSave, onDele
 
 const styles = StyleSheet.create({
   overlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(17,24,39,0.45)' },
-  sheet: { backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, paddingBottom: 28 },
+  sheet: { maxHeight: '90%', flexShrink: 1, backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, paddingBottom: 28 },
+  modalHeader: { flexShrink: 0 },
   handle: { alignSelf: 'center', width: 40, height: 4, borderRadius: 2, backgroundColor: '#D1D5DB', marginBottom: 14 },
   titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 },
   heading: { fontSize: 20, fontWeight: '800', color: '#111827' },
   cancelText: { fontSize: 14, fontWeight: '600', color: '#2563EB' },
+  fieldsScroll: { flexShrink: 1 },
+  fieldsContent: { paddingBottom: 4 },
   label: { fontSize: 12, fontWeight: '600', color: '#6B7280', marginBottom: 6 },
   input: {
     backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 12,
@@ -212,7 +235,7 @@ const styles = StyleSheet.create({
     borderRadius: 10, fontSize: 16, fontWeight: '600', color: '#111827', paddingVertical: 0,
   },
   error: { color: '#B91C1C', fontSize: 13, marginTop: 12 },
-  actions: { flexDirection: 'row', gap: 12, marginTop: 22 },
+  actions: { flexDirection: 'row', gap: 12, marginTop: 16, flexShrink: 0 },
   btn: { flex: 1, borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
   btnDanger: { backgroundColor: '#FEF2F2', borderWidth: 1, borderColor: '#FECACA' },
   btnDangerText: { color: '#B91C1C', fontSize: 16, fontWeight: '700' },

@@ -1,14 +1,13 @@
 import React, { useMemo, useState } from 'react';
 import { Alert, Animated, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { DAYS, DAY_SHORT, LEVEL_HEX } from './parser';
-import { END_H, START_H, layoutDay, maxCols } from './calendarLayout';
+import { END_H, START_H, layoutDay } from './calendarLayout';
 import LessonEditModal from './LessonEditModal';
 
 const HOUR_H = 64; // altezza di un'ora (px)
 const GUTTER = 46; // larghezza colonna orari
 const HEADER_H = 34;
-const MIN_COL = 104; // larghezza minima di una colonna-giorno
-const MIN_SUB = 76; // larghezza minima di una sotto-colonna (lezioni affiancate)
+const DAY_GAP = 4;
 const HOURS = Array.from({ length: END_H - START_H + 1 }, (_, i) => START_H + i); // 8..19
 
 const pad = (h) => `${String(h).padStart(2, '0')}:00`;
@@ -50,9 +49,10 @@ export default function CalendarView({ schedule, favorites, onToggle, edits = {}
     );
   }, [favRows, showRi, edits, courseColors]);
 
-  const baseW = Math.max(MIN_COL, (width - 32 - GUTTER) / 6);
-  const dayW = perDay.map((evs) => Math.max(baseW, maxCols(evs) * MIN_SUB));
-  const totalW = dayW.reduce((a, b) => a + b, 0);
+  const availableDaysW = width - 32 - GUTTER;
+  const baseW = (availableDaysW - DAY_GAP * (DAYS.length - 1)) / DAYS.length;
+  const dayW = DAYS.map(() => baseW);
+  const totalW = dayW.reduce((a, b) => a + b, 0) + DAY_GAP * (DAYS.length - 1);
   const bodyH = (END_H - START_H) * HOUR_H;
 
   return (
@@ -97,7 +97,7 @@ export default function CalendarView({ schedule, favorites, onToggle, edits = {}
               ]}
             >
               {DAYS.map((d, i) => (
-                <View key={d} style={{ width: dayW[i], height: HEADER_H, alignItems: 'center', justifyContent: 'center' }}>
+                <View key={d} style={{ width: dayW[i] + (i < DAYS.length - 1 ? DAY_GAP : 0), height: HEADER_H, alignItems: 'center', justifyContent: 'center' }}>
                   <View style={[styles.dayPill, { width: dayW[i] - 12 }]}>
                     <Text style={styles.dayPillText}>{DAY_SHORT[i]}</Text>
                   </View>
@@ -137,10 +137,12 @@ export default function CalendarView({ schedule, favorites, onToggle, edits = {}
 
                 <View style={{ flexDirection: 'row', height: bodyH }}>
                   {perDay.map((evs, di) => (
-                    <View key={di} style={[styles.dayCol, { width: dayW[di], height: bodyH }]}>
-                      {evs.map((ev) => (
-                        <EventBox key={ev.key} ev={ev} colW={dayW[di]} onRemove={onToggle} onEdit={setEditing} />
-                      ))}
+                    <View key={di} style={{ width: dayW[di] + (di < DAYS.length - 1 ? DAY_GAP : 0), height: bodyH }}>
+                      <View style={[styles.dayCol, { width: dayW[di], height: bodyH }]}>
+                        {evs.map((ev) => (
+                          <EventBox key={ev.key} ev={ev} colW={dayW[di]} onRemove={onToggle} onEdit={setEditing} />
+                        ))}
+                      </View>
                     </View>
                   ))}
                 </View>
@@ -161,7 +163,7 @@ export default function CalendarView({ schedule, favorites, onToggle, edits = {}
           setEditing(null);
         }}
         onSave={(u) => {
-          onEdit?.(u.key, { subject: u.subject, details: u.details, note: u.note, start: u.start, end: u.end, startLabel: u.startLabel, endLabel: u.endLabel });
+          onEdit?.(u.key, { subject: u.subject, professor: u.professor, details: u.details, note: u.note, start: u.start, end: u.end, startLabel: u.startLabel, endLabel: u.endLabel });
           onSetCourseColor?.(u.rowId, u.color);
           setEditing(null);
         }}

@@ -4,7 +4,7 @@
 //   @orario/schedule   -> scheduleMatrix estratta dal PDF (serve per ricostruire il calendario al riavvio)
 //   @orario/fileName   -> nome del PDF importato
 //   @orario/favorites  -> array di id dei corsi preferiti
-//   @orario/edits      -> { [chiaveEvento]: { subject, details, note, start, end, startLabel, endLabel } }
+//   @orario/edits      -> { [chiaveEvento]: { subject, professor, details, note, start, end, startLabel, endLabel } }
 //   @orario/courseColors -> { [idCorso]: colore esadecimale }
 // Le modifiche e i colori di un corso vengono eliminati quando il corso viene rimosso dai preferiti;
 // vengono inoltre azzerati quando si importa un nuovo PDF.
