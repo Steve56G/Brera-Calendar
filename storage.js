@@ -6,8 +6,8 @@
 //   @orario/favorites  -> array di id dei corsi preferiti
 //   @orario/edits      -> { [chiaveEvento]: { subject, details, note, start, end, startLabel, endLabel } }
 //   @orario/courseColors -> { [idCorso]: colore esadecimale }
-// Preferiti e modifiche sono legati agli id/chiavi dello schedule salvato: vengono azzerati insieme
-// quando si importa un nuovo PDF (comportamento già presente in App.js).
+// Le modifiche e i colori di un corso vengono eliminati quando il corso viene rimosso dai preferiti;
+// vengono inoltre azzerati quando si importa un nuovo PDF.
 
 import { useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';

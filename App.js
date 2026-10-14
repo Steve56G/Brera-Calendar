@@ -193,13 +193,30 @@ export default function App() {
   }, [setCourseColors]);
 
   const toggleFav = useCallback((id) => {
+    const removing = favorites.has(id);
+
     setFavorites((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
       return next;
     });
-  }, [setFavorites]);
+
+    // Rimuovere un corso dai preferiti ripristina il suo stato originale:
+    // elimina le modifiche alle lezioni e il colore personalizzato.
+    if (removing) {
+      const prefix = `${id}-`;
+      setEdits((prev) => Object.fromEntries(
+        Object.entries(prev).filter(([key]) => !key.startsWith(prefix))
+      ));
+      setCourseColors((prev) => {
+        if (!(id in prev)) return prev;
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
+    }
+  }, [favorites, setFavorites, setEdits, setCourseColors]);
 
   const webRef = useRef(null);
   const pagesRef = useRef([]);
