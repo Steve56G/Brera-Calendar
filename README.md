@@ -1,6 +1,6 @@
 # Orario
 
-App Expo/React Native per importare un orario universitario da PDF, consultare le lezioni in lista o calendario e gestire preferiti e modifiche personali.
+App Expo/React Native per importare un orario universitario dell'accademia di Brera da PDF, consultare le lezioni in lista o calendario e gestire preferiti e modifiche personali.
 
 ## Requisiti
 

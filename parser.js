@@ -342,9 +342,8 @@ function buildDays(slots) {
 
 /* ------------------------------ Pagina ------------------------------ */
 
-function extractPage(p, legend, dbg) {
-  const info = { page: p.n, items: p.items.length, rects: p.rects.length, days: 0, rows: 0, mode: '-' };
-  dbg.push(info);
+function extractPage(p, legend) {
+  const info = { mode: '-', grid: '-' };
 
   // 1) intestazioni dei giorni
   const heads = [];
@@ -360,7 +359,6 @@ function extractPage(p, legend, dbg) {
     .sort((a, b) => a.cx - b.cx)
     .forEach((h) => { if (!hs.some((x) => x.d === h.d)) hs.push(h); });
   if (hs.length < 3) { info.mode = 'intestazioni insufficienti'; return []; }
-  info.days = hs.length;
 
   // 2) etichette orarie -> geometria di ogni blocco giorno
   const nums = p.items.filter((i) => HOUR_RE.test(i.n) && i.cy > topY && i.cy < topY + 70);
@@ -391,7 +389,6 @@ function extractPage(p, legend, dbg) {
   }
   if (!blocks.length) { info.mode = 'blocchi giorno non calcolabili'; return []; }
   refineBlocks(blocks, p.rects, headerBottom);
-  info.blocks = blocks.map((b) => `${DAYS[b.d]} ${b.h0}h x${b.N} L=${Math.round(b.L)} w=${Math.round(b.sw * 10) / 10}`);
 
   const leftEnd = Math.min(...blocks.map((b) => b.L)) - 1;
   const blockAt = (x) => blocks.find((b) => x >= b.L - b.sw * 0.5 && x <= b.R + b.sw * 0.5);
@@ -621,7 +618,6 @@ function extractPage(p, legend, dbg) {
     out.push({ pageNo: p.n, items, tags, affini, level, slots, reasons: [...new Set(reasons)] });
   });
 
-  info.rows = out.length;
   return out;
 }
 
@@ -637,9 +633,8 @@ export function parseSchedule(rawPages) {
 
   const legend = findLegend(pages);
   const refs = buildRefs(legend);
-  const dbg = [];
   const raw = [];
-  pages.forEach((p) => raw.push(...extractPage(p, refs, dbg)));
+  pages.forEach((p) => raw.push(...extractPage(p, refs)));
 
   // calibrazione colonna "professore": mediana dell'x iniziale dell'ultimo gruppo dopo un grande spazio
   const cands = [];
@@ -694,8 +689,5 @@ export function parseSchedule(rawPages) {
     });
   });
 
-  return {
-    scheduleMatrix,
-    debug: { pages: dbg, legend, profX: Number.isFinite(profX) ? profX : null, rows: scheduleMatrix.length },
-  };
+  return { scheduleMatrix };
 }

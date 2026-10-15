@@ -1,24 +1,22 @@
 {
   "expo": {
-    "name": "orario-app",
+    "name": "Brera Calendar",
     "slug": "orario-app",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./logo_brera.png",
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
+        "backgroundColor": "#E6E6E6",
+        "foregroundImage": "./logo_brera.png"
       }
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./logo_brera.png"
     }
   }
 }

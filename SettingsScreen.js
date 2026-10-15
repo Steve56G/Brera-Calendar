@@ -80,13 +80,16 @@ export default function SettingsScreen({ visible, onClose, onClearCalendar }) {
           <>
             <Header title="Informazioni" onBack={goBack} />
             <View style={styles.aboutCenter}>
-              <Image source={require('./assets/icon.png')} style={styles.logo} />
+              <Image source={require('./logo_brera.png')} style={styles.logo} />
               <Text style={styles.appName}>{APP_NAME}</Text>
               <Text style={styles.version}>Versione {Constants.expoConfig?.version || '1.0.0'}</Text>
             </View>
-            <Pressable style={styles.supportBtn} onPress={() => Linking.openURL(SUPPORT_URL)} accessibilityRole="link">
-              <Text style={styles.supportText}>L&apos;app è completamente gratuita e open source, ma se vuoi darmi più di una pacca sulla spalla puoi offrirmi qualcosa su questo link</Text>
-            </Pressable>
+            <View style={styles.supportArea}>
+              <Text style={styles.supportNote}>L&apos;app è completamente gratuita e open source, ma se vuoi darmi più di una pacca sulla spalla puoi offrirmi qualcosa su questo link!</Text>
+              <Pressable style={styles.supportBtn} onPress={() => Linking.openURL(SUPPORT_URL)} accessibilityRole="link">
+                <Text style={styles.supportText}>ko-fi</Text>
+              </Pressable>
+            </View>
           </>
         )}
       </View>
@@ -116,6 +119,8 @@ const styles = StyleSheet.create({
   logo: { width: 96, height: 96, borderRadius: 22, marginBottom: 6 },
   appName: { fontSize: 24, fontWeight: '800', color: '#111827' },
   version: { fontSize: 14, color: '#6B7280' },
+  supportArea: { alignItems: 'center' },
+  supportNote: { color: '#6B7280', fontSize: 13, textAlign: 'center', marginHorizontal: 16, marginBottom: 2 },
   supportBtn: { alignSelf: 'center', paddingVertical: 14, paddingHorizontal: 24, marginBottom: 28 },
   supportText: { color: '#2563EB', fontSize: 16, fontWeight: '600', textDecorationLine: 'underline' },
 });

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Modal,
@@ -17,7 +17,7 @@ import { DAYS, DAY_SHORT } from './parser';
 const MIN_H = 8; // 08:00
 const MAX_H = 19; // 19:00
 const NOTE_BOX_MIN_H = 88;
-const NOTE_BOX_MAX_H = 224;
+const NOTE_BOX_MAX_H = 124;
 const NOTE_INPUT_PADDING = 24;
 
 const fmt = (h) => `${String(Math.floor(h)).padStart(2, '0')}:${h % 1 ? '30' : '00'}`;
@@ -77,11 +77,18 @@ export default function LessonEditModal({ visible, lesson, color, isCustom = fal
   const [room, setRoom] = useState(() => lesson?.details || '');
   const [note, setNote] = useState(() => lesson?.note || '');
   const [noteBoxHeight, setNoteBoxHeight] = useState(NOTE_BOX_MIN_H);
+  const [noteTextHeight, setNoteTextHeight] = useState(44);
+  const [noteEditing, setNoteEditing] = useState(false);
+  const noteInputRef = useRef(null);
   const [selectedColor, setSelectedColor] = useState(() => color || null);
   const [dayIndex, setDayIndex] = useState(() => lesson?.dayIndex ?? 0);
   const [startT, setStartT] = useState(() => lesson?.startLabel || fmt(lesson?.start ?? MIN_H));
   const [endT, setEndT] = useState(() => lesson?.endLabel || fmt(lesson?.end ?? MIN_H));
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (noteEditing) noteInputRef.current?.focus();
+  }, [noteEditing]);
 
   const handleSave = () => {
     const name = title.trim();
@@ -180,20 +187,40 @@ export default function LessonEditModal({ visible, lesson, color, isCustom = fal
 
             <Text style={styles.label}>Note</Text>
             <View style={[styles.noteBox, { height: noteBoxHeight }]}>
-              <TextInput
-                style={styles.noteInput}
-                value={note}
-                onChangeText={setNote}
-                onContentSizeChange={({ nativeEvent }) => {
-                  const nextHeight = Math.min(NOTE_BOX_MAX_H, Math.max(NOTE_BOX_MIN_H, nativeEvent.contentSize.height + NOTE_INPUT_PADDING));
-                  setNoteBoxHeight((currentHeight) => currentHeight === nextHeight ? currentHeight : nextHeight);
-                }}
-                placeholder="Aggiungi una nota"
-                placeholderTextColor="#9CA3AF"
-                multiline
-                scrollEnabled={noteBoxHeight >= NOTE_BOX_MAX_H}
-                textAlignVertical="top"
-              />
+              <ScrollView
+                style={styles.noteScroll}
+                nestedScrollEnabled
+                showsVerticalScrollIndicator
+                keyboardShouldPersistTaps="handled"
+              >
+                <TextInput
+                  ref={noteInputRef}
+                  style={[styles.noteInput, { height: noteTextHeight }]}
+                  value={note}
+                  onChangeText={setNote}
+                  onContentSizeChange={({ nativeEvent }) => {
+                    const contentHeight = Math.ceil(nativeEvent.contentSize.height + NOTE_INPUT_PADDING);
+                    const nextBoxHeight = Math.min(NOTE_BOX_MAX_H, Math.max(NOTE_BOX_MIN_H, contentHeight));
+                    setNoteTextHeight((currentHeight) => currentHeight === contentHeight ? currentHeight : contentHeight);
+                    setNoteBoxHeight((currentHeight) => currentHeight === nextBoxHeight ? currentHeight : nextBoxHeight);
+                  }}
+                  placeholder="Aggiungi una nota"
+                  placeholderTextColor="#9CA3AF"
+                  multiline
+                  editable={noteEditing}
+                  scrollEnabled={false}
+                  textAlignVertical="top"
+                  onBlur={() => setNoteEditing(false)}
+                />
+                {!noteEditing && (
+                  <Pressable
+                    style={StyleSheet.absoluteFill}
+                    onPress={() => setNoteEditing(true)}
+                    accessibilityRole="button"
+                    accessibilityLabel="Tocca per modificare le note"
+                  />
+                )}
+              </ScrollView>
             </View>
 
             <Text style={styles.label}>{isCustom ? 'Colore della lezione' : 'Colore del corso (tutte le lezioni)'}</Text>
@@ -249,7 +276,8 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     overflow: 'hidden',
   },
-  noteInput: { flex: 1, paddingHorizontal: 14, paddingVertical: 12, fontSize: 16, lineHeight: 20, color: '#111827' },
+  noteScroll: { flex: 1 },
+  noteInput: { paddingHorizontal: 14, paddingVertical: 12, fontSize: 16, lineHeight: 20, color: '#111827' },
   timeRow: { flexDirection: 'row', gap: 12 },
   timeCol: { flex: 1 },
   stepper: { flexDirection: 'row', alignItems: 'center', gap: 6 },

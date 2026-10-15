@@ -3,10 +3,8 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
-  Modal,
   Platform,
   Pressable,
-  ScrollView,
   StatusBar,
   StyleSheet,
   Text,
@@ -190,8 +188,6 @@ export default function App() {
   const [errorMsg, setErrorMsg] = useState('');
   const [pdfB64, setPdfB64] = useState(null);
   const [schedule, setSchedule, scheduleLoaded] = usePersistentState('schedule', []);
-  const [debugInfo, setDebugInfo] = useState(null);
-  const [showDebug, setShowDebug] = useState(false);
   const [query, setQuery] = useState('');
   const deferredQuery = useDeferredValue(query);
   const [tab, setTab] = useState('calendar'); // 'list' | 'calendar' -- il Calendario è la schermata iniziale
@@ -332,7 +328,7 @@ export default function App() {
         // piccolo rinvio per lasciar renderizzare l'indicatore
         setTimeout(() => {
           try {
-            const { scheduleMatrix, debug } = parseSchedule([...pagesRef.current]);
+            const { scheduleMatrix } = parseSchedule([...pagesRef.current]);
             if (importModeRef.current === 'update') {
               if (!scheduleMatrix.length) throw new Error('nessuna riga riconosciuta nel PDF, calendario non modificato');
               const merged = mergeSchedules(schedule, scheduleMatrix, favorites, edits, courseColors);
@@ -351,7 +347,6 @@ export default function App() {
               setCourseColors({});
               setChanges({});
             }
-            setDebugInfo(debug);
             setPdfB64(null);
             setQuery('');
             setStatus('ready');
@@ -435,18 +430,13 @@ export default function App() {
       <View style={styles.header}>
         <Text style={styles.title}>Orario</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          {visibleStatus === 'ready' && (
-            <Pressable onPress={() => setShowDebug(true)} hitSlop={10}>
-              <Text style={styles.debugLink}>Diagnostica</Text>
-            </Pressable>
-          )}
           {tab === 'list' && (
             <>
               <Pressable onPress={() => setShowProfile(true)} hitSlop={10} accessibilityRole="button" accessibilityLabel="Apri profilo studente">
-                <Text style={styles.debugLink}>Profilo</Text>
+                <Text style={styles.headerLink}>Profilo</Text>
               </Pressable>
               <Pressable onPress={() => setShowSettings(true)} hitSlop={10} accessibilityRole="button" accessibilityLabel="Apri impostazioni">
-                <Text style={styles.debugLink}>Impostazioni</Text>
+                <Text style={styles.headerLink}>Impostazioni</Text>
               </Pressable>
             </>
           )}
@@ -518,7 +508,7 @@ export default function App() {
                 <Text style={styles.emptyTitle}>Nessun risultato</Text>
                 <Text style={styles.hint}>
                   {schedule.length === 0
-                    ? 'Nel PDF non sono state riconosciute righe. Apri “Diagnostica” per i dettagli.'
+                    ? 'Nel PDF non sono state riconosciute righe. Verifica che sia un orario valido e riprova.'
                     : `Nessuna materia o docente corrisponde a “${query}”.`}
                 </Text>
               </View>
@@ -568,22 +558,6 @@ export default function App() {
         onSave={setStudentProfile}
       />
 
-      <Modal visible={showDebug} animationType="slide" onRequestClose={() => setShowDebug(false)}>
-        <View style={styles.modal}>
-          <Text style={styles.title}>Diagnostica parsing</Text>
-          <ScrollView style={{ flex: 1, marginVertical: 12 }}>
-            <Text selectable style={styles.mono}>
-              {debugInfo ? JSON.stringify(debugInfo, null, 2) : '—'}
-            </Text>
-            <Text selectable style={[styles.mono, { marginTop: 16 }]}>
-              {'Esempio (prime 3 righe):\n' + JSON.stringify(schedule.slice(0, 3), null, 2)}
-            </Text>
-          </ScrollView>
-          <Pressable style={styles.primaryBtn} onPress={() => setShowDebug(false)}>
-            <Text style={styles.primaryBtnText}>Chiudi</Text>
-          </Pressable>
-        </View>
-      </Modal>
     </View>
   );
 }
@@ -594,7 +568,7 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#F3F4F6', paddingTop: (StatusBar.currentHeight || 0) + 12, paddingHorizontal: 16 },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
   title: { fontSize: 26, fontWeight: '800', color: '#111827' },
-  debugLink: { color: '#2563EB', fontWeight: '600' },
+  headerLink: { color: '#2563EB', fontWeight: '600' },
   primaryBtn: { backgroundColor: '#2563EB', borderRadius: 12, paddingVertical: 14, alignItems: 'center', marginBottom: 12 },
   primaryBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24, gap: 10 },
@@ -643,9 +617,6 @@ const styles = StyleSheet.create({
   empty: { alignItems: 'center', paddingVertical: 48, paddingHorizontal: 24, gap: 8 },
   emptyTitle: { fontSize: 18, fontWeight: '700', color: '#374151' },
   hiddenWeb: { position: 'absolute', width: 1, height: 1, opacity: 0, left: -10, top: -10 },
-  modal: { flex: 1, backgroundColor: '#fff', padding: 16, paddingTop: (StatusBar.currentHeight || 0) + 16 },
-  mono: { fontFamily: Platform.OS === 'android' ? 'monospace' : 'Menlo', fontSize: 11, color: '#111827' },
 });
-
 
 
