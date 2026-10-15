@@ -25,7 +25,16 @@ Per leggere i PDF, l'app carica PDF.js e il relativo worker dalla CDN pubblica c
 
 I file `.env` e le credenziali di firma locali sono esclusi da Git. Non inserire segreti nel codice client o in variabili `EXPO_PUBLIC_*`: i valori inclusi nel bundle dell'app non sono segreti.
 
+## Download
+
+### Android
+1. Scarica `brera-calendar-X.Y.Z.apk` dalla pagina [Releases](https://github.com/Steve56G/Brera-Calendar/releases).
+2. Apri il file dal telefono. Se richiesto, consenti l'installazione da questa fonte
+   (Impostazioni → App → Accesso speciale → Installa app sconosciute).
+3. Tocca **Installa** e poi **Apri**.
+
+Verifica d'integrità (facoltativa): `sha256sum brera-calendar-X.Y.Z.apk` deve coincidere con l'hash indicato nella release.
+
 ## Licenza e asset
 
 Il codice del progetto è distribuito secondo la licenza MIT; vedere [LICENSE](./LICENSE). Le parti e gli asset provenienti dal template Expo mantengono l'attribuzione e i termini di licenza Expo indicati nel file.
-
