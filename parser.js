@@ -671,6 +671,7 @@ export function parseSchedule(rawPages) {
     let professor = join(prof);
     if (!subject && professor) { subject = professor; professor = ''; }
     if (!subject) return;
+    if (['MATERIE E LEZIONI', 'MATERIE E DOCENTI'].includes(norm(subject))) return;
     if (/^(BANDO|\*|DOCENTE DA NOMINARE.*)$/i.test(professor)) professor = 'Docente da nominare (bando)';
 
     scheduleMatrix.push({
