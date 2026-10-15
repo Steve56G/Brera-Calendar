@@ -3,7 +3,7 @@ import { Alert, Image, Linking, Modal, Platform, Pressable, StatusBar, StyleShee
 import Constants from 'expo-constants';
 
 const APP_NAME = 'Orario';
-const SUPPORT_URL = 'https://www.google.com';
+const SUPPORT_URL = 'https://ko-fi.com/steven56';
 
 function Header({ title, onBack }) {
   return (
@@ -71,7 +71,7 @@ export default function SettingsScreen({ visible, onClose, onClearCalendar }) {
               <Pressable style={({ pressed }) => [styles.dangerBtn, pressed && { opacity: 0.85 }]} onPress={confirmClear}>
                 <Text style={styles.dangerText}>Pulisci calendario</Text>
               </Pressable>
-              <Text style={styles.note}>Elimina orario importato, preferiti e modifiche salvati su questo dispositivo.</Text>
+              <Text style={styles.note}>Elimina orario importato, corsi preferiti e modifiche ai corsi salvati su questo dispositivo.</Text>
             </View>
           </>
         )}
@@ -85,7 +85,7 @@ export default function SettingsScreen({ visible, onClose, onClearCalendar }) {
               <Text style={styles.version}>Versione {Constants.expoConfig?.version || '1.0.0'}</Text>
             </View>
             <Pressable style={styles.supportBtn} onPress={() => Linking.openURL(SUPPORT_URL)} accessibilityRole="link">
-              <Text style={styles.supportText}>Supporto</Text>
+              <Text style={styles.supportText}>L&apos;app è completamente gratuita e open source, ma se vuoi darmi più di una pacca sulla spalla puoi offrirmi qualcosa su questo link</Text>
             </Pressable>
           </>
         )}

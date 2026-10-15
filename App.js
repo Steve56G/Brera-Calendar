@@ -368,9 +368,14 @@ export default function App() {
 
   const filtered = useMemo(() => {
     const tokens = norm(deferredQuery).split(' ').filter(Boolean);
-    if (!tokens.length) return schedule;
-    return schedule.filter((r) => tokens.every((t) => r.searchText.includes(t)));
-  }, [schedule, deferredQuery]);
+    const matches = tokens.length
+      ? schedule.filter((r) => tokens.every((t) => r.searchText.includes(t)))
+      : schedule;
+    return [
+      ...matches.filter((r) => favorites.has(r.id)),
+      ...matches.filter((r) => !favorites.has(r.id)),
+    ];
+  }, [schedule, deferredQuery, favorites]);
 
   // elimina i dati locali del calendario e azzera lo stato in memoria
   const handleClearCalendar = useCallback(async () => {
