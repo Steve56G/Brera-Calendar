@@ -14,7 +14,8 @@
           "imageWidth": 200,
           "backgroundColor": "#F3F4F6"
         }
-      ]
+      ],
+      "expo-font"
     ],
     "ios": {
       "supportsTablet": true,
@@ -40,6 +41,12 @@
     },
     "web": {
       "favicon": "./logo_brera.png"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "4009e335-db79-4025-b76a-d64def4fb972"
+      }
+    },
+    "owner": "melondogenjoyer"
   }
 }
