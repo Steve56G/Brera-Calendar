@@ -2,6 +2,14 @@
 
 App Expo/React Native per importare un orario universitario dell'accademia di Brera da PDF, consultare le lezioni in lista o calendario e gestire preferiti e modifiche personali.
 
+## Download
+
+### Android
+1. Scarica `brera-calendar-X.Y.Z.apk` dalla pagina [Releases](https://github.com/Steve56G/Brera-Calendar/releases).
+2. Apri il file dal telefono. Se richiesto, consenti l'installazione da questa fonte (Impostazioni → App → Accesso speciale → Installa app sconosciute),
+   oppure clicca Altri dettagli → Installa Comunque
+3. Tocca **Installa** e poi **Apri**.
+
 ## Requisiti
 
 - Node.js (versione LTS compatibile con Expo SDK 57)
@@ -24,16 +32,6 @@ Non sono necessarie chiavi API o variabili d'ambiente per eseguire l'app. Orari 
 Per leggere i PDF, l'app carica PDF.js e il relativo worker dalla CDN pubblica cdnjs. L'importazione richiede quindi una connessione Internet per scaricare la libreria; il PDF viene elaborato nella WebView locale dell'app e non viene caricato su un servizio remoto.
 
 I file `.env` e le credenziali di firma locali sono esclusi da Git. Non inserire segreti nel codice client o in variabili `EXPO_PUBLIC_*`: i valori inclusi nel bundle dell'app non sono segreti.
-
-## Download
-
-### Android
-1. Scarica `brera-calendar-X.Y.Z.apk` dalla pagina [Releases](https://github.com/Steve56G/Brera-Calendar/releases).
-2. Apri il file dal telefono. Se richiesto, consenti l'installazione da questa fonte
-   (Impostazioni → App → Accesso speciale → Installa app sconosciute).
-3. Tocca **Installa** e poi **Apri**.
-
-Verifica d'integrità (facoltativa): `sha256sum brera-calendar-X.Y.Z.apk` deve coincidere con l'hash indicato nella release.
 
 ## Licenza e asset
 
