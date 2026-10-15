@@ -6,14 +6,37 @@
     "orientation": "portrait",
     "icon": "./logo_brera.png",
     "userInterfaceStyle": "light",
+    "plugins": [
+      [
+        "expo-splash-screen",
+        {
+          "image": "./logo_brera.png",
+          "imageWidth": 200,
+          "backgroundColor": "#F3F4F6"
+        }
+      ]
+    ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.steve56g.breracalendar",
+      "buildNumber": "1",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
+      "package": "com.steve56g.breracalendar",
+      "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#E6E6E6",
         "foregroundImage": "./logo_brera.png"
-      }
+      },
+      "blockedPermissions": [
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.VIBRATE"
+      ]
     },
     "web": {
       "favicon": "./logo_brera.png"
