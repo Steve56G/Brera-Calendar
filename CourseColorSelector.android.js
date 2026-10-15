@@ -2,6 +2,18 @@ import React, { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 const COURSE_COLORS = ['#FCA5A5', '#86EFAC', '#93C5FD'];
+const LIGHT_COLORS = [
+  '#FECACA',
+  '#FED7AA',
+  '#FDE68A',
+  '#FEF3C7',
+  '#D9F99D',
+  '#BBF7D0',
+  '#A7F3D0',
+  '#A5F3FC',
+  '#BFDBFE',
+  '#DDD6FE',
+];
 const HUES = Array.from({ length: 12 }, (_, index) => index * 30);
 const TONES = [
   [0.55, 0.65],
@@ -42,6 +54,24 @@ export default function CourseColorSelector({ color, onChange }) {
 
   return (
     <View style={styles.container}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.lightColors}
+        keyboardShouldPersistTaps="handled"
+        accessibilityLabel="Colori chiari"
+      >
+        {LIGHT_COLORS.map((option) => (
+          <Pressable
+            key={option}
+            accessibilityRole="radio"
+            accessibilityState={{ checked: color === option }}
+            accessibilityLabel={`Colore chiaro ${option}`}
+            onPress={() => onChange(option)}
+            style={[styles.swatch, { backgroundColor: option }, color === option && styles.selected]}
+          />
+        ))}
+      </ScrollView>
       <View style={styles.row}>
         {COURSE_COLORS.map((option) => (
           <Pressable
@@ -98,6 +128,7 @@ export default function CourseColorSelector({ color, onChange }) {
 
 const styles = StyleSheet.create({
   container: { marginBottom: 16 },
+  lightColors: { alignItems: 'center', gap: 8, paddingBottom: 10 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   palette: { alignItems: 'center', gap: 8, paddingTop: 10 },
   swatch: { width: 30, height: 30, borderRadius: 15, borderWidth: 2, borderColor: 'transparent' },

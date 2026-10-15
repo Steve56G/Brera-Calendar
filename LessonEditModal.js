@@ -12,10 +12,13 @@ import {
   View,
 } from 'react-native';
 import CourseColorSelector from './CourseColorSelector';
+import { DAYS, DAY_SHORT } from './parser';
 
 const MIN_H = 8; // 08:00
 const MAX_H = 19; // 19:00
-const NOTE_BOX_H = 88;
+const NOTE_BOX_MIN_H = 88;
+const NOTE_BOX_MAX_H = 224;
+const NOTE_INPUT_PADDING = 24;
 
 const fmt = (h) => `${String(Math.floor(h)).padStart(2, '0')}:${h % 1 ? '30' : '00'}`;
 
@@ -68,12 +71,14 @@ function TimeField({ label, value, onChange }) {
  *  - onDelete(lesson): elimina solo la lezione selezionata
  *  - onCancel(): chiusura senza salvare
  */
-export default function LessonEditModal({ visible, lesson, color, onSave, onDelete, onCancel }) {
+export default function LessonEditModal({ visible, lesson, color, isCustom = false, isNew = false, onSave, onDelete, onCancel }) {
   const [title, setTitle] = useState(() => lesson?.subject || '');
   const [professor, setProfessor] = useState(() => lesson?.professor || '');
   const [room, setRoom] = useState(() => lesson?.details || '');
   const [note, setNote] = useState(() => lesson?.note || '');
+  const [noteBoxHeight, setNoteBoxHeight] = useState(NOTE_BOX_MIN_H);
   const [selectedColor, setSelectedColor] = useState(() => color || null);
+  const [dayIndex, setDayIndex] = useState(() => lesson?.dayIndex ?? 0);
   const [startT, setStartT] = useState(() => lesson?.startLabel || fmt(lesson?.start ?? MIN_H));
   const [endT, setEndT] = useState(() => lesson?.endLabel || fmt(lesson?.end ?? MIN_H));
   const [error, setError] = useState('');
@@ -87,7 +92,7 @@ export default function LessonEditModal({ visible, lesson, color, onSave, onDele
     if (s < MIN_H || e > MAX_H) return setError(`L'orario deve essere compreso tra ${fmt(MIN_H)} e ${fmt(MAX_H)}.`);
     if (e <= s) return setError("L'orario di fine deve essere successivo a quello di inizio.");
     setError('');
-    onSave({ ...lesson, subject: name, professor: professor.trim(), details: room.trim(), note, color: selectedColor, start: s, end: e, startLabel: fmt(s), endLabel: fmt(e) });
+    onSave({ ...lesson, subject: name, professor: professor.trim(), details: room.trim(), note, color: selectedColor, dayIndex, start: s, end: e, startLabel: fmt(s), endLabel: fmt(e) });
   };
 
   const confirmDelete = () => {
@@ -122,6 +127,26 @@ export default function LessonEditModal({ visible, lesson, color, onSave, onDele
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator
           >
+            {isCustom && (
+              <>
+                <Text style={styles.label}>Giorno</Text>
+                <View style={styles.daysRow}>
+                  {DAYS.map((day, index) => (
+                    <Pressable
+                      key={day}
+                      accessibilityRole="radio"
+                      accessibilityState={{ checked: dayIndex === index }}
+                      accessibilityLabel={day}
+                      onPress={() => setDayIndex(index)}
+                      style={[styles.dayButton, dayIndex === index && styles.dayButtonSelected]}
+                    >
+                      <Text style={[styles.dayButtonText, dayIndex === index && styles.dayButtonTextSelected]}>{DAY_SHORT[index]}</Text>
+                    </Pressable>
+                  ))}
+                </View>
+              </>
+            )}
+
             <Text style={styles.label}>Titolo</Text>
             <TextInput
               style={styles.input}
@@ -154,27 +179,24 @@ export default function LessonEditModal({ visible, lesson, color, onSave, onDele
             />
 
             <Text style={styles.label}>Note</Text>
-            <View style={styles.noteBox}>
-              <ScrollView
-                style={styles.noteScroll}
-                nestedScrollEnabled
-                showsVerticalScrollIndicator
-                keyboardShouldPersistTaps="handled"
-              >
-                <TextInput
-                  style={styles.noteInput}
-                  value={note}
-                  onChangeText={setNote}
-                  placeholder="Aggiungi una nota"
-                  placeholderTextColor="#9CA3AF"
-                  multiline
-                  numberOfLines={3}
-                  textAlignVertical="top"
-                />
-              </ScrollView>
+            <View style={[styles.noteBox, { height: noteBoxHeight }]}>
+              <TextInput
+                style={styles.noteInput}
+                value={note}
+                onChangeText={setNote}
+                onContentSizeChange={({ nativeEvent }) => {
+                  const nextHeight = Math.min(NOTE_BOX_MAX_H, Math.max(NOTE_BOX_MIN_H, nativeEvent.contentSize.height + NOTE_INPUT_PADDING));
+                  setNoteBoxHeight((currentHeight) => currentHeight === nextHeight ? currentHeight : nextHeight);
+                }}
+                placeholder="Aggiungi una nota"
+                placeholderTextColor="#9CA3AF"
+                multiline
+                scrollEnabled={noteBoxHeight >= NOTE_BOX_MAX_H}
+                textAlignVertical="top"
+              />
             </View>
 
-            <Text style={styles.label}>Colore del corso (tutte le lezioni)</Text>
+            <Text style={styles.label}>{isCustom ? 'Colore della lezione' : 'Colore del corso (tutte le lezioni)'}</Text>
             <CourseColorSelector color={selectedColor} onChange={setSelectedColor} />
 
             <View style={styles.timeRow}>
@@ -214,8 +236,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 12,
     paddingHorizontal: 14, paddingVertical: 12, fontSize: 16, color: '#111827', marginBottom: 16,
   },
+  daysRow: { flexDirection: 'row', gap: 6, marginBottom: 16 },
+  dayButton: { flex: 1, alignItems: 'center', paddingVertical: 8, borderRadius: 9, backgroundColor: '#F3F4F6', borderWidth: 1, borderColor: '#E5E7EB' },
+  dayButtonSelected: { backgroundColor: '#DBEAFE', borderColor: '#2563EB' },
+  dayButtonText: { color: '#4B5563', fontSize: 12, fontWeight: '600' },
+  dayButtonTextSelected: { color: '#1D4ED8' },
   noteBox: {
-    height: NOTE_BOX_H,
     backgroundColor: '#F9FAFB',
     borderWidth: 1,
     borderColor: '#E5E7EB',
@@ -223,8 +249,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     overflow: 'hidden',
   },
-  noteScroll: { flex: 1 },
-  noteInput: { paddingHorizontal: 14, paddingVertical: 12, fontSize: 16, color: '#111827' },
+  noteInput: { flex: 1, paddingHorizontal: 14, paddingVertical: 12, fontSize: 16, lineHeight: 20, color: '#111827' },
   timeRow: { flexDirection: 'row', gap: 12 },
   timeCol: { flex: 1 },
   stepper: { flexDirection: 'row', alignItems: 'center', gap: 6 },

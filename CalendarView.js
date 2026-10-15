@@ -22,7 +22,7 @@ export default function CalendarView({ schedule, favorites, onToggle, edits = {}
 
   // eventi per giorno, già posizionati (col / cols)
   const perDay = useMemo(() => {
-    const days = [[], [], [], [], [], []];
+    const days = DAYS.map(() => []);
     favRows.forEach((r) => {
       r.days.forEach((d) => {
         d.lessons.forEach((s, i) =>
@@ -33,6 +33,16 @@ export default function CalendarView({ schedule, favorites, onToggle, edits = {}
             days[d.dayIndex].push({ key: `${r.id}-${d.dayIndex}-r${i}`, rowId: r.id, subject: r.subject, professor: r.professor, level: r.level, kind: 'ricevimento', ...pick(s) })
           );
         }
+      });
+    });
+    Object.entries(edits).forEach(([key, edit]) => {
+      if (!edit.created || edit.deleted || !Number.isInteger(edit.dayIndex) || !days[edit.dayIndex]) return;
+      days[edit.dayIndex].push({
+        ...edit,
+        key,
+        kind: 'lezione',
+        custom: true,
+        color: courseColors[edit.rowId],
       });
     });
     // applica le modifiche manuali (titolo/orario) prima di calcolare le sovrapposizioni
@@ -55,6 +65,26 @@ export default function CalendarView({ schedule, favorites, onToggle, edits = {}
   const totalW = dayW.reduce((a, b) => a + b, 0) + DAY_GAP * (DAYS.length - 1);
   const bodyH = (END_H - START_H) * HOUR_H;
 
+  const addLesson = () => {
+    const key = `custom-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    setEditing({
+      key,
+      rowId: key,
+      subject: '',
+      professor: '',
+      details: '',
+      note: '',
+      dayIndex: 0,
+      start: START_H,
+      end: START_H + 1,
+      startLabel: pad(START_H),
+      endLabel: pad(START_H + 1),
+      kind: 'lezione',
+      custom: true,
+      isNew: true,
+    });
+  };
+
   return (
     <View style={{ flex: 1 }}>
       <View style={styles.topRow}>
@@ -63,6 +93,9 @@ export default function CalendarView({ schedule, favorites, onToggle, edits = {}
         </Text>
         <Pressable onPress={() => setShowRi((v) => !v)} style={[styles.chip, showRi && styles.chipOn]} hitSlop={8}>
           <Text style={[styles.chipText, showRi && { color: '#92400E' }]}>Ricevimenti</Text>
+        </Pressable>
+        <Pressable onPress={addLesson} style={styles.addLessonButton} accessibilityRole="button">
+          <Text style={styles.addLessonText}>+ Lezione</Text>
         </Pressable>
       </View>
 
@@ -157,13 +190,34 @@ export default function CalendarView({ schedule, favorites, onToggle, edits = {}
         visible={!!editing}
         lesson={editing}
         color={courseColors[editing?.rowId]}
+        isCustom={editing?.custom}
+        isNew={editing?.isNew}
         onCancel={() => setEditing(null)}
         onDelete={(lesson) => {
+          if (lesson.isNew) {
+            setEditing(null);
+            return;
+          }
           onEdit?.(lesson.key, { ...(edits[lesson.key] || {}), deleted: true });
           setEditing(null);
         }}
         onSave={(u) => {
-          onEdit?.(u.key, { subject: u.subject, professor: u.professor, details: u.details, note: u.note, start: u.start, end: u.end, startLabel: u.startLabel, endLabel: u.endLabel });
+          const savedLesson = u.custom
+            ? {
+                created: true,
+                rowId: u.rowId,
+                dayIndex: u.dayIndex,
+                subject: u.subject,
+                professor: u.professor,
+                details: u.details,
+                note: u.note,
+                start: u.start,
+                end: u.end,
+                startLabel: u.startLabel,
+                endLabel: u.endLabel,
+              }
+            : { subject: u.subject, professor: u.professor, details: u.details, note: u.note, start: u.start, end: u.end, startLabel: u.startLabel, endLabel: u.endLabel };
+          onEdit?.(u.key, savedLesson);
           onSetCourseColor?.(u.rowId, u.color);
           setEditing(null);
         }}
@@ -185,7 +239,7 @@ const EventBox = React.memo(function EventBox({ ev, colW, onRemove, onEdit }) {
   return (
     <Pressable
       onPress={() => onEdit(ev)}
-      onLongPress={() =>
+      onLongPress={!ev.custom ? () =>
         Alert.alert(
           'Rimuovere il corso dai preferiti?',
           `Vuoi rimuovere ${ev.subject} dai preferiti? Tutte le sue lezioni scompariranno dal calendario.`,
@@ -193,8 +247,7 @@ const EventBox = React.memo(function EventBox({ ev, colW, onRemove, onEdit }) {
             { text: 'Annulla', style: 'cancel' },
             { text: 'Rimuovi', style: 'destructive', onPress: () => onRemove(ev.rowId) },
           ]
-        )
-      }
+        ) : undefined}
       delayLongPress={450}
       style={[
         styles.event,
@@ -233,6 +286,8 @@ const styles = StyleSheet.create({
   chip: { borderRadius: 999, paddingHorizontal: 12, paddingVertical: 5, backgroundColor: '#fff', borderWidth: 1, borderColor: '#D1D5DB' },
   chipOn: { backgroundColor: '#FEF3C7', borderColor: '#F59E0B' },
   chipText: { fontSize: 12, fontWeight: '600', color: '#374151' },
+  addLessonButton: { borderRadius: 999, paddingHorizontal: 12, paddingVertical: 5, backgroundColor: '#DBEAFE' },
+  addLessonText: { fontSize: 12, fontWeight: '700', color: '#1D4ED8' },
   legend: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 },
   dot: { width: 12, height: 12, borderRadius: 6 },
   legendText: { fontSize: 12, color: '#374151', marginRight: 10 },
