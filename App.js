@@ -16,6 +16,7 @@ import { WebView } from 'react-native-webview';
 import { extractorHtml } from './pdfExtractor';
 import { parseSchedule, norm, DAY_SHORT, LEVEL_HEX } from './parser';
 import CalendarView from './CalendarView';
+import RoomAvailabilityScreen from './RoomAvailabilityScreen';
 import { usePersistentState, setCodec, clearCalendarData } from './storage';
 import SettingsScreen from './SettingsScreen';
 import ProfileScreen from './ProfileScreen';
@@ -190,7 +191,7 @@ export default function App() {
   const [schedule, setSchedule, scheduleLoaded] = usePersistentState('schedule', []);
   const [query, setQuery] = useState('');
   const deferredQuery = useDeferredValue(query);
-  const [tab, setTab] = useState('calendar'); // 'list' | 'calendar' -- il Calendario è la schermata iniziale
+  const [tab, setTab] = useState('calendar'); // 'list' | 'calendar' | 'rooms' -- il Calendario è la schermata iniziale
   const [showSettings, setShowSettings] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [studentProfile, setStudentProfile, profileLoaded] = usePersistentState('studentProfile', {
@@ -520,6 +521,8 @@ export default function App() {
         </>
       )}
 
+      {tab === 'rooms' && <RoomAvailabilityScreen schedule={schedule} />}
+
       {tab === 'calendar' && <CalendarView schedule={schedule} favorites={favorites} onToggle={toggleFav} edits={edits} courseColors={courseColors} onEdit={editLesson} onSetCourseColor={setCourseColor} />}
 
       {/* WebView nascosta: esegue pdf.js solo durante l'importazione */}
@@ -546,6 +549,9 @@ export default function App() {
           <Text style={[styles.tabText, tab === 'calendar' && styles.tabTextOn]}>
             Calendario{favorites.size ? `  ★ ${favorites.size}` : ''}
           </Text>
+        </Pressable>
+        <Pressable style={[styles.tabBtn, tab === 'rooms' && styles.tabBtnOn]} onPress={() => setTab('rooms')}>
+          <Text style={[styles.tabText, tab === 'rooms' && styles.tabTextOn]}>Aule</Text>
         </Pressable>
       </View>
 
@@ -618,5 +624,8 @@ const styles = StyleSheet.create({
   emptyTitle: { fontSize: 18, fontWeight: '700', color: '#374151' },
   hiddenWeb: { position: 'absolute', width: 1, height: 1, opacity: 0, left: -10, top: -10 },
 });
+
+
+
 
 
