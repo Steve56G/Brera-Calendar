@@ -2,7 +2,7 @@
   "expo": {
     "name": "Brera Calendar",
     "slug": "orario-app",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "orientation": "portrait",
     "icon": "./src/assets/logo_brera.png",
     "userInterfaceStyle": "light",
