@@ -12,6 +12,7 @@ import {
   View,
 } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
 import { extractorHtml } from './pdfExtractor';
 import { parseSchedule, norm, DAY_SHORT, LEVEL_HEX } from './parser';
@@ -182,7 +183,7 @@ const ScheduleCard = React.memo(function ScheduleCard({ item, isFav, onToggle, c
 
 /* ------------------------------ App ------------------------------ */
 
-export default function App() {
+function AppContent() {
   const [status, setStatus] = useState('idle'); // idle | loading | ready | error
   const [fileName, setFileName, nameLoaded] = usePersistentState('fileName', '');
   const [progress, setProgress] = useState('');
@@ -418,14 +419,14 @@ export default function App() {
 
   if (!loaded) {
     return (
-      <View style={[styles.root, styles.center]}>
+      <SafeAreaView edges={['bottom']} style={[styles.root, styles.center]}>
         <ActivityIndicator size="large" color="#2563EB" />
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View style={styles.root}>
+    <SafeAreaView edges={['bottom']} style={styles.root}>
       <StatusBar barStyle="dark-content" backgroundColor="#F3F4F6" />
 
       <View style={styles.header}>
@@ -564,7 +565,15 @@ export default function App() {
         onSave={setStudentProfile}
       />
 
-    </View>
+    </SafeAreaView>
+  );
+}
+
+export default function App() {
+  return (
+    <SafeAreaProvider>
+      <AppContent />
+    </SafeAreaProvider>
   );
 }
 
@@ -624,7 +633,6 @@ const styles = StyleSheet.create({
   emptyTitle: { fontSize: 18, fontWeight: '700', color: '#374151' },
   hiddenWeb: { position: 'absolute', width: 1, height: 1, opacity: 0, left: -10, top: -10 },
 });
-
 
 
 
