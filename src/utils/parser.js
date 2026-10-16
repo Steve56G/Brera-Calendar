@@ -51,7 +51,8 @@ const dist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
 const isWhite = (c) => c[0] > 240 && c[1] > 240 && c[2] > 240;
 const isBlack = (c) => Math.max(c[0], c[1], c[2]) < 50;
 const isColored = (c) => !isWhite(c) && !isBlack(c);
-const snap = (v) => Math.round(v * 2) / 2;
+// La griglia del PDF Brera ha celle da un'ora: non produrre mai mezze ore.
+const snap = (v) => Math.round(v);
 const median = (arr) => {
   const a = [...arr].sort((x, y) => x - y);
   return a[Math.floor(a.length / 2)];
@@ -207,56 +208,102 @@ function borderRows(p, left, leftMinX, leftEnd, headerBottom) {
 // Ricostruisce la griglia dalle etichette orarie (8,9,...19) che si ripetono per ogni giorno.
 // Non dipende dalla posizione delle intestazioni dei giorni: i giorni si separano
 // quando la sequenza delle ore ricomincia (19 -> 8).
-function blocksFromLabels(labels, hs) {
-  if (labels.length < 6) return null;
-  const sorted = [...labels].sort((a, b) => a.cx - b.cx);
+// Stima la larghezza di una colonna usando le distanze fra le etichette.
+// I salti dovuti a numeri mancanti (circa 2*sw) vengono esclusi.
+function estimateSlotWidth(labels) {
+  const xs = [];
+  [...labels].sort((a, b) => a.cx - b.cx).forEach((l) => {
+    const last = xs[xs.length - 1];
+    if (last && Math.abs(l.cx - last.cx) <= 1.2) {
+      last.values.push(l.cx);
+      last.cx = last.values.reduce((sum, x) => sum + x, 0) / last.values.length;
+    } else xs.push({ cx: l.cx, values: [l.cx] });
+  });
   const gaps = [];
-  for (let i = 1; i < sorted.length; i++) gaps.push(sorted[i].cx - sorted[i - 1].cx);
-  const gs = [...gaps].sort((a, b) => a - b);
-  const thr = Math.max(0.8, gs[Math.floor(gs.length * 0.9)] * 0.35);
-  const clusters = [];
-  sorted.forEach((l, i) => {
-    if (i === 0 || gaps[i - 1] > thr) clusters.push([l]);
-    else clusters[clusters.length - 1].push(l);
-  });
-  const val = (l) => parseInt(l.n, 10);
-  const mean = (a) => a.reduce((x, y) => x + y, 0) / a.length;
-  let cells;
-  if (labels.length / clusters.length >= 1.5) {
-    // etichette "inizio/fine" impilate: un cluster = una cella
-    cells = clusters.map((c) => ({ cx: mean(c.map((l) => l.cx)), h: Math.min(...c.map(val)) }));
-  } else {
-    // etichette affiancate: coppie consecutive = una cella
-    if (clusters.length % 2) return null;
-    cells = [];
-    for (let i = 0; i < clusters.length; i += 2) {
-      const a = clusters[i][0], b = clusters[i + 1][0];
-      cells.push({ cx: (a.cx + b.cx) / 2, h: Math.min(val(a), val(b)) });
-    }
+  for (let i = 1; i < xs.length; i++) {
+    const gap = xs[i].cx - xs[i - 1].cx;
+    if (gap >= 4 && gap <= 22) gaps.push(gap);
   }
-  const groups = [];
-  cells.forEach((c, i) => {
-    if (i === 0 || c.h <= cells[i - 1].h) groups.push([c]);
-    else groups[groups.length - 1].push(c);
-  });
-  const good = groups.filter((g) => g.length >= 3);
-  let dayIdx;
-  if (good.length === hs.length) dayIdx = hs.map((h) => h.d);
-  else if (good.length === 6) dayIdx = [0, 1, 2, 3, 4, 5];
-  else return null;
+  const withinDay = gaps.filter((gap) => gap <= 17.5);
+  const source = withinDay.length >= 3 ? withinDay : gaps;
+  if (source.length < 3) return null;
+  const sw = median(source);
+  return sw > 2 ? sw : null;
+}
 
-  const blocks = good.map((g, j) => {
-    const n = g.length;
-    const mk = (n - 1) / 2;
-    const mx = mean(g.map((c) => c.cx));
-    let num = 0, den = 0;
-    g.forEach((c, k) => { num += (k - mk) * (c.cx - mx); den += (k - mk) * (k - mk); });
-    const sw = num / den;
-    if (!(sw > 2)) return null;
-    const L = mx - mk * sw - sw / 2;
-    return { d: dayIdx[j], N: n, sw, L, R: L + n * sw, h0: g[0].h };
+// Ricostruisce ogni giorno associando l'etichetta al suo valore numerico, non
+// accoppiando le etichette vicine. Se manca, per esempio, il 15, il 16 resta
+// quindi nella sua colonna reale invece di slittare a sinistra.
+function blocksFromLabels(labels, hs) {
+  if (labels.length < 6 || hs.length < 3) return null;
+  const globalSw = estimateSlotWidth(labels);
+  if (!globalSw) return null;
+
+  // Le due righe dell'intestazione sono: 8..18 e 9..19. Scegliamo i due
+  // gruppi verticali più popolati per ignorare eventuali numeri nel contenuto.
+  const yGroups = [];
+  [...labels].sort((a, b) => a.cy - b.cy).forEach((l) => {
+    const last = yGroups[yGroups.length - 1];
+    if (last && Math.abs(l.cy - last.cy) <= 2.5) {
+      last.items.push(l);
+      last.cy = last.items.reduce((sum, item) => sum + item.cy, 0) / last.items.length;
+    } else yGroups.push({ cy: l.cy, items: [l] });
   });
-  return blocks.every(Boolean) ? blocks : null;
+  const rows = [...yGroups]
+    .sort((a, b) => b.items.length - a.items.length)
+    .slice(0, 2)
+    .sort((a, b) => a.cy - b.cy);
+  if (!rows.length) return null;
+
+  const pointsByDay = new Map(hs.map((h) => [h.d, []]));
+  labels.forEach((l) => {
+    let rowIndex;
+    if (rows.length >= 2) {
+      rowIndex = Math.abs(l.cy - rows[0].cy) <= Math.abs(l.cy - rows[1].cy) ? 0 : 1;
+      if (Math.abs(l.cy - rows[rowIndex].cy) > 3.5) return;
+    } else {
+      // Se nel PDF è presente una sola riga, il 19 identifica la riga inferiore.
+      rowIndex = labels.some((item) => item.n === '19') ? 1 : 0;
+    }
+
+    const value = parseInt(l.n, 10);
+    const slot = value - (rowIndex === 0 ? 8 : 9);
+    if (!Number.isFinite(slot)) return;
+
+    let best = null;
+    hs.forEach((h) => {
+      const N = h.d === 5 ? 6 : 11;
+      if (slot < 0 || slot >= N) return;
+      const expectedX = h.cx + (slot - (N - 1) / 2) * globalSw;
+      const error = Math.abs(l.cx - expectedX);
+      if (!best || error < best.error) best = { h, slot, error };
+    });
+    if (best && best.error <= globalSw * 0.85) {
+      pointsByDay.get(best.h.d).push({ slot: best.slot, cx: l.cx });
+    }
+  });
+
+  const blocks = hs.map((h) => {
+    const N = h.d === 5 ? 6 : 11;
+    const points = pointsByDay.get(h.d) || [];
+    const distinctSlots = new Set(points.map((p) => p.slot));
+    let sw = globalSw;
+    if (points.length >= 4 && distinctSlots.size >= 2) {
+      const meanSlot = points.reduce((sum, p) => sum + p.slot, 0) / points.length;
+      const meanX = points.reduce((sum, p) => sum + p.cx, 0) / points.length;
+      const den = points.reduce((sum, p) => sum + (p.slot - meanSlot) ** 2, 0);
+      const fitted = den > 0
+        ? points.reduce((sum, p) => sum + (p.slot - meanSlot) * (p.cx - meanX), 0) / den
+        : globalSw;
+      // Evita che pochi testi anomali deformino la larghezza della griglia.
+      if (fitted >= globalSw * 0.8 && fitted <= globalSw * 1.2) sw = fitted;
+    }
+    const L = points.length
+      ? median(points.map((p) => p.cx - (p.slot + 0.5) * sw))
+      : h.cx - (N * sw) / 2;
+    return { d: h.d, N, sw, L, R: L + N * sw, h0: 8 };
+  });
+  return blocks.length >= 3 ? blocks : null;
 }
 
 // Affina l'allineamento orizzontale usando i bordi dei rettangoli colorati: i bordi
@@ -372,22 +419,35 @@ function extractPage(p, legend) {
   let blocks = blocksFromLabels(labels, hs);
   info.grid = blocks ? 'etichette' : 'intestazioni';
   if (!blocks) {
-    // ripiego: blocchi stimati dalla posizione delle intestazioni dei giorni
-    blocks = hs
-      .map((h, i) => {
-        const lo = i === 0 ? -Infinity : (hs[i - 1].cx + h.cx) / 2;
-        const hi = i === hs.length - 1 ? Infinity : (h.cx + hs[i + 1].cx) / 2;
-        const ls = labels.filter((l) => l.cx >= lo && l.cx < hi);
-        if (ls.length < 2) return null;
+    // Ripiego: geometria stimata dal centro dell'intestazione del giorno e
+    // dalla larghezza comune delle celle, senza dipendere dalle etichette mancanti.
+    const sw = estimateSlotWidth(labels);
+    if (sw) {
+      blocks = hs.map((h) => {
         const N = h.d === 5 ? 6 : 11;
-        const mn = Math.min(...ls.map((l) => l.cx));
-        const mx = Math.max(...ls.map((l) => l.cx));
-        const sw = (mx - mn) / (N - 1);
-        if (!(sw > 2)) return null;
-        const L = mn - sw / 2;
+        const L = h.cx - (N * sw) / 2;
         return { d: h.d, N, sw, L, R: L + N * sw, h0: 8 };
-      })
-      .filter(Boolean);
+      });
+    } else {
+      blocks = hs
+        .map((h) => {
+          const N = h.d === 5 ? 6 : 11;
+          const dayLabels = labels.filter((l) => {
+            const slot = parseInt(l.n, 10) - (l.cy < yMin + 15 ? 8 : 9);
+            if (slot < 0 || slot >= N) return false;
+            const expectedX = h.cx + (slot - (N - 1) / 2) * 14.5;
+            return Math.abs(l.cx - expectedX) < 14.5;
+          });
+          if (dayLabels.length < 2) return null;
+          const mn = Math.min(...dayLabels.map((l) => l.cx));
+          const mx = Math.max(...dayLabels.map((l) => l.cx));
+          const swLocal = (mx - mn) / Math.max(1, N - 1);
+          if (!(swLocal > 2)) return null;
+          const L = h.cx - (N * swLocal) / 2;
+          return { d: h.d, N, sw: swLocal, L, R: L + N * swLocal, h0: 8 };
+        })
+        .filter(Boolean);
+    }
   }
   if (!blocks.length) { info.mode = 'blocchi giorno non calcolabili'; return []; }
   refineBlocks(blocks, p.rects, headerBottom);
@@ -489,7 +549,22 @@ function extractPage(p, legend) {
     // 2) testo nei sotto-box (aule, note); il testo fuori da celle colorate diventa cella "solo testo"
     const dayItems = p.items.filter((i) => i.cx >= leftEnd && i.cy > headerBottom && i.cy >= b0 && i.cy < b1);
     splitAtRI(subs, dayItems, blockAt, reasons);
-    const orphans = {};
+    // Il testo senza riempimento può occupare più celle orarie. Usiamo i suoi
+    // estremi X per ricostruire l'intervallo, invece di assegnarlo solo all'ora
+    // del centro del testo.
+    const orphans = [];
+    const textSlotRange = (it, blk) => {
+      const centerSlot = Math.max(0, Math.min(blk.N - 1, Math.floor((it.cx - blk.L) / blk.sw)));
+      const rel0 = (it.x0 - blk.L) / blk.sw;
+      const rel1 = (it.x1 - blk.L) / blk.sw;
+      if (rel1 - rel0 < 0.55) return { start: centerSlot, end: centerSlot + 1 };
+      let start = Math.floor(rel0 + 0.05);
+      let end = Math.ceil(rel1 - 0.05);
+      start = Math.max(0, Math.min(blk.N - 1, start));
+      end = Math.max(start + 1, Math.min(blk.N, end));
+      return { start, end };
+    };
+
     dayItems.forEach((it) => {
       const blk = blockAt(it.cx);
       if (!blk) return;
@@ -499,25 +574,37 @@ function extractPage(p, legend) {
         const dd = it.cx < c.x0 ? c.x0 - it.cx : it.cx > c.x1 ? it.cx - c.x1 : 0;
         if (dd <= blk.sw * 0.3 && (!best || dd < best.dd)) best = { dd, c };
       });
-      if (best) best.c.texts.push(it);
-      else {
-        const slot = Math.max(0, Math.min(blk.N - 1, Math.floor((it.cx - blk.L) / blk.sw)));
-        const key = `${blk.d}:${slot}`;
-        (orphans[key] = orphans[key] || { blk, slot, texts: [] }).texts.push(it);
+      if (best) {
+        best.c.texts.push(it);
+        return;
+      }
+
+      const range = textSlotRange(it, blk);
+      const overlaps = orphans.filter((o) => o.blk === blk && range.start < o.end && range.end > o.start);
+      if (!overlaps.length) {
+        orphans.push({ blk, start: range.start, end: range.end, texts: [it] });
+      } else {
+        const base = overlaps[0];
+        base.start = Math.min(base.start, range.start);
+        base.end = Math.max(base.end, range.end);
+        base.texts.push(it);
+        overlaps.slice(1).forEach((other) => {
+          base.start = Math.min(base.start, other.start);
+          base.end = Math.max(base.end, other.end);
+          base.texts.push(...other.texts);
+          orphans.splice(orphans.indexOf(other), 1);
+        });
       }
     });
-    const orphanList = Object.values(orphans).sort((a, b) => a.blk.d - b.blk.d || a.slot - b.slot);
-    let prevO = null;
-    orphanList.forEach((o) => {
-      const txt = o.texts.map((t) => t.s.trim()).join('|');
-      if (prevO && prevO.blk === o.blk && o.slot === prevO.slot + 1 && prevO.txt === txt) {
-        prevO.cell.x1 = o.blk.L + (o.slot + 1) * o.blk.sw;
-        prevO.slot = o.slot;
-      } else {
-        const cell = { blk: o.blk, x0: o.blk.L + o.slot * o.blk.sw, x1: o.blk.L + (o.slot + 1) * o.blk.sw, color: null, texts: o.texts };
-        subs.push(cell);
-        prevO = { blk: o.blk, slot: o.slot, txt, cell };
-      }
+
+    orphans.forEach((o) => {
+      subs.push({
+        blk: o.blk,
+        x0: o.blk.L + o.start * o.blk.sw,
+        x1: o.blk.L + o.end * o.blk.sw,
+        color: null,
+        texts: o.texts,
+      });
     });
     if (subs.some((c) => !c.color)) reasons.push('orario dedotto dal testo senza cella colorata');
 
