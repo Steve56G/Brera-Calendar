@@ -12,21 +12,12 @@ import { DAYS, LEVEL_HEX } from '../constants/schedule';
 
 const DAY_RE = [/^LUNEDI/, /^MARTEDI/, /^MERCOLEDI/, /^GIOVEDI/, /^VENERDI/, /^SABATO/];
 const HOUR_RE = /^(8|9|1[0-9])$/;
-const LEVEL_DEFS = [
-  { key: 'TRIENNIO', label: 'Triennio' },
-  { key: 'BIENNIO', label: 'Biennio' },
-  { key: 'RESTAURO', label: 'Restauro' },
-  { key: 'ATTIVITA FORMATIVE AFFINI', label: 'Attività affini' },
-];
-
 // Colori ufficiali dei livelli (usati sia per riconoscere i box nel PDF sia per la UI)
 const CANON_REFS = [
   { label: 'Triennio', color: [153, 204, 0] },
   { label: 'Biennio', color: [153, 204, 255] },
   { label: 'Restauro', color: [255, 153, 204] },
 ];
-// riferimenti = colori canonici + colori trovati nella legenda del PDF
-const buildRefs = (legend) => [...CANON_REFS, ...legend];
 const LOCATION_CODES = {
   SN: 'Salone Napoleonico',
   SC: 'San Carpoforo',
@@ -51,46 +42,21 @@ const dist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
 const isWhite = (c) => c[0] > 240 && c[1] > 240 && c[2] > 240;
 const isBlack = (c) => Math.max(c[0], c[1], c[2]) < 50;
 const isColored = (c) => !isWhite(c) && !isBlack(c);
+
+function nearestLegend(color, legend, maxDist) {
+  let best = null;
+  for (const item of legend) {
+    const d = dist(color, item.color);
+    if (d < maxDist && (!best || d < best.d)) best = { d, l: item };
+  }
+  return best ? best.l : null;
+}
 // La griglia del PDF Brera ha celle da un'ora: non produrre mai mezze ore.
 const snap = (v) => Math.round(v);
 const median = (arr) => {
   const a = [...arr].sort((x, y) => x - y);
   return a[Math.floor(a.length / 2)];
 };
-
-/* ------------------------------ Legenda livelli ------------------------------ */
-
-function findLegend(pages) {
-  const legend = [];
-  for (const def of LEVEL_DEFS) {
-    let best = null;
-    for (const p of pages) {
-      for (const it of p.items) {
-        if (!it.n.startsWith(def.key)) continue;
-        for (const r of p.rects) {
-          if (!isColored(r.c)) continue;
-          const w = r.x1 - r.x0, h = r.y1 - r.y0;
-          if (w > 50 || h > 50) continue;
-          const rcy = (r.y0 + r.y1) / 2;
-          if (Math.abs(rcy - it.cy) > 12) continue;
-          const d = Math.min(Math.abs(it.x0 - r.x1), Math.abs(r.x0 - it.x1));
-          if (d < 40 && (!best || d < best.d)) best = { d, color: r.c };
-        }
-      }
-    }
-    if (best) legend.push({ label: def.label, color: best.color });
-  }
-  return legend;
-}
-
-function nearestLegend(color, legend, maxDist) {
-  let best = null;
-  for (const l of legend) {
-    const d = dist(color, l.color);
-    if (d < maxDist && (!best || d < best.d)) best = { d, l };
-  }
-  return best ? best.l : null;
-}
 
 /* ------------------------------ Righe (colonna sinistra) ------------------------------ */
 
@@ -128,34 +94,83 @@ function textRows(left) {
   return rows;
 }
 
-// Classifica la riga come Triennio / Biennio con un sistema a voti:
-//  - box nella 3ª colonna (piccolo, a destra della colonna sinistra): peso 3
-//  - altri riquadri colorati nella colonna sinistra: peso 2
-//  - celle colorate delle lezioni nei giorni: peso 1
-function classifyLevel(rowRects, cells, refs, leftEnd, leftMinX) {
+// Il livello del corso è codificato dal colore della terza colonna stretta,
+// immediatamente a sinistra della griglia settimanale. Il rettangolo può essere
+// unito graficamente alla prima cella oraria se ha lo stesso colore.
+function classifyLevel(rowRects, leftEnd, leftMinX) {
   const leftW = leftEnd - leftMinX;
-  const votes = {};
-  const vote = (color, w) => {
-    const l = nearestLegend(color, refs, 55);
-    if (l) votes[l.label] = (votes[l.label] || 0) + w;
-  };
-  rowRects.forEach((rc) => {
-    if (!isColored(rc.c)) return;
-    if ((rc.x0 + rc.x1) / 2 >= leftEnd) return;
-    const w = rc.x1 - rc.x0;
-    const third = w < leftW * 0.25 && rc.x1 >= leftEnd - leftW * 0.25;
-    vote(rc.c, third ? 3 : 2);
+  if (!(leftW > 0)) return null;
+
+  // La terza colonna è stretta. Una cella con due livelli può però essere
+  // divisa in due metà affiancate: la soglia deve quindi accettare anche
+  // rettangoli che coprono circa metà della larghezza del marker.
+  const markerWidth = leftW * 0.07;
+  const markerLeft = leftEnd - markerWidth;
+  const markerRight = leftEnd;
+  const markerSpan = markerRight - markerLeft;
+  const markerRects = rowRects
+    .filter((rc) => {
+      if (!isColored(rc.c)) return false;
+      const overlap = Math.min(rc.x1, markerRight) - Math.max(rc.x0, markerLeft);
+      return overlap >= markerSpan * 0.3;
+    })
+    .sort((a, b) => {
+      const startA = Math.abs(a.x0 - markerLeft);
+      const startB = Math.abs(b.x0 - markerLeft);
+      if (startA !== startB) return startA - startB;
+      const overlapA = Math.min(a.x1, markerRight) - Math.max(a.x0, markerLeft);
+      const overlapB = Math.min(b.x1, markerRight) - Math.max(b.x0, markerLeft);
+      return overlapB - overlapA;
+    });
+
+  if (!markerRects.length) return null;
+
+  // Raccoglie tutti i colori canonici che occupano la terza colonna. In questo
+  // modo riconosce sia le metà affiancate sia quelle sovrapposte verticalmente.
+  // Gli sfondi delle colonne materia/docente restano esclusi perché non coprono
+  // una parte significativa del marker.
+  const levels = [];
+  markerRects.forEach((rc) => {
+    const level = nearestLegend(rc.c, CANON_REFS, 55);
+    if (level && !levels.some((item) => item.label === level.label)) levels.push(level);
   });
-  cells.forEach((c) => c.color && vote(c.color, 1));
-  const t = votes.Triennio || 0;
-  const b = votes.Biennio || 0;
-  const r = votes.Restauro || 0;
-  if (t > b && t > r) return { label: 'Triennio' };
-  if (b > t && b > r) return { label: 'Biennio' };
-  if (r > t && r > b) return { label: 'Restauro' };
-  if (t && t === b && t === r) return { label: 'Non indicato', conflict: true };
-  if (votes['Attività affini']) return { label: 'Attività affini' };
-  return null;
+
+  if (!levels.length) return null;
+  // Ordine deterministico dei tag, indipendente dall'ordine dei rettangoli nel PDF.
+  levels.sort((a, b) => CANON_REFS.findIndex((item) => item.label === a.label) - CANON_REFS.findIndex((item) => item.label === b.label));
+  return {
+    label: levels.map((level) => level.label).join(' + '),
+    labels: levels.map((level) => level.label),
+  };
+}
+
+
+// Classifica il corso aggregando i colori delle singole lezioni nella griglia
+// settimanale. Le celle solo testo (senza riempimento) non aggiungono livelli:
+// quando sono presenti lezioni colorate, contano esclusivamente quei colori.
+function classifyLessonLevels(subs) {
+  const weights = new Map();
+
+  subs.forEach((cell) => {
+    if (cell.kind !== 'lezione' || !Array.isArray(cell.color)) return;
+
+    const level = nearestLegend(cell.color, CANON_REFS, 55);
+    if (!level) return;
+
+    // La larghezza è proporzionale alla durata della lezione; ogni durata
+    // positiva contribuisce al livello corrispondente.
+    const weight = Math.max(0, cell.x1 - cell.x0);
+    if (weight > 0) weights.set(level.label, (weights.get(level.label) || 0) + weight);
+  });
+
+  // Non scegliere un solo colore dominante: ogni livello presente nelle
+  // lezioni colorate diventa un tag. L'ordine è sempre Triennio, Biennio, Restauro.
+  const labels = CANON_REFS
+    .filter((level) => (weights.get(level.label) || 0) > 0)
+    .map((level) => level.label);
+
+  if (!labels.length) return null;
+  return { label: labels.join(' + '), labels };
 }
 
 const YEAR_TAG_RE = /\d\s*°.*anno|anno\s*\(?\d\)?$/i;
@@ -391,7 +406,7 @@ function buildDays(slots) {
 
 /* ------------------------------ Pagina ------------------------------ */
 
-function extractPage(p, legend) {
+function extractPage(p) {
   const info = { mode: '-', grid: '-' };
 
   // 1) intestazioni dei giorni
@@ -657,8 +672,9 @@ function extractPage(p, legend) {
     if (info.mode === 'testo') reasons.push('righe stimate dal testo (bordi di riga non trovati)');
     if (info.grid === 'intestazioni') reasons.push('griglia oraria stimata dalle intestazioni dei giorni');
 
-    level = classifyLevel(rowRects, cells, legend, leftEnd, leftMinX);
-    if (level && level.conflict) reasons.push('colore Triennio/Biennio/Restauro non univoco');
+    // Prima usa i colori delle lezioni della settimana. Il marker della terza
+    // colonna resta un fallback quando non esistono lezioni con colore leggibile.
+    level = classifyLessonLevels(subs) || classifyLevel(rowRects, leftEnd, leftMinX);
 
     const slots = cells
       .map((c) => {
@@ -720,10 +736,8 @@ export function parseSchedule(rawPages) {
       .filter((i) => i.n),
   }));
 
-  const legend = findLegend(pages);
-  const refs = buildRefs(legend);
   const raw = [];
-  pages.forEach((p) => raw.push(...extractPage(p, refs)));
+  pages.forEach((p) => raw.push(...extractPage(p)));
 
   // calibrazione colonna "professore": mediana dell'x iniziale dell'ultimo gruppo dopo un grande spazio
   const cands = [];

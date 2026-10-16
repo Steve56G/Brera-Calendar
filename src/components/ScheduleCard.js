@@ -4,7 +4,7 @@ import { DAY_SHORT, LEVEL_HEX } from '../constants/schedule';
 
 const ScheduleCard = React.memo(function ScheduleCard({ item, isFav, onToggle, changes, onShowChanges }) {
   const levelHex = LEVEL_HEX[item.level];
-  const bg = levelHex || '#E5E7EB';
+  const levelLabels = String(item.level || 'Non indicato').split(' + ').filter(Boolean);
   const fg = '#111827';
 
   return (
@@ -22,9 +22,11 @@ const ScheduleCard = React.memo(function ScheduleCard({ item, isFav, onToggle, c
       </View>
 
       <View style={styles.badgeRow}>
-        <View style={[styles.badge, { backgroundColor: bg }]}>
-          <Text style={[styles.badgeText, { color: fg }]}>{item.level}</Text>
-        </View>
+        {levelLabels.map((level) => (
+          <View key={`level-${level}`} style={[styles.badge, { backgroundColor: LEVEL_HEX[level] || '#E5E7EB' }]}>
+            <Text style={[styles.badgeText, { color: fg }]}>{level}</Text>
+          </View>
+        ))}
         {item.tags.map((tag, index) => (
           <View key={index} style={[styles.badge, styles.badgeOutline]}>
             <Text style={[styles.badgeText, { color: '#374151' }]}>{tag}</Text>
