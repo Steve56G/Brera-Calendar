@@ -15,6 +15,7 @@ const HOUR_RE = /^(8|9|1[0-9])$/;
 const LEVEL_DEFS = [
   { key: 'TRIENNIO', label: 'Triennio' },
   { key: 'BIENNIO', label: 'Biennio' },
+  { key: 'RESTAURO', label: 'Restauro' },
   { key: 'ATTIVITA FORMATIVE AFFINI', label: 'Attività affini' },
 ];
 
@@ -22,6 +23,7 @@ const LEVEL_DEFS = [
 const CANON_REFS = [
   { label: 'Triennio', color: [153, 204, 0] },
   { label: 'Biennio', color: [153, 204, 255] },
+  { label: 'Restauro', color: [255, 153, 204] },
 ];
 // riferimenti = colori canonici + colori trovati nella legenda del PDF
 const buildRefs = (legend) => [...CANON_REFS, ...legend];
@@ -146,9 +148,11 @@ function classifyLevel(rowRects, cells, refs, leftEnd, leftMinX) {
   cells.forEach((c) => c.color && vote(c.color, 1));
   const t = votes.Triennio || 0;
   const b = votes.Biennio || 0;
-  if (t > b) return { label: 'Triennio' };
-  if (b > t) return { label: 'Biennio' };
-  if (t && t === b) return { label: 'Non indicato', conflict: true };
+  const r = votes.Restauro || 0;
+  if (t > b && t > r) return { label: 'Triennio' };
+  if (b > t && b > r) return { label: 'Biennio' };
+  if (r > t && r > b) return { label: 'Restauro' };
+  if (t && t === b && t === r) return { label: 'Non indicato', conflict: true };
   if (votes['Attività affini']) return { label: 'Attività affini' };
   return null;
 }
@@ -567,7 +571,7 @@ function extractPage(p, legend) {
     if (info.grid === 'intestazioni') reasons.push('griglia oraria stimata dalle intestazioni dei giorni');
 
     level = classifyLevel(rowRects, cells, legend, leftEnd, leftMinX);
-    if (level && level.conflict) reasons.push('colore Triennio/Biennio non univoco');
+    if (level && level.conflict) reasons.push('colore Triennio/Biennio/Restauro non univoco');
 
     const slots = cells
       .map((c) => {
