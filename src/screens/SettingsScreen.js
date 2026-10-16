@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Alert, Image, Linking, Modal, Platform, Pressable, StatusBar, StyleSheet, Text, View } from 'react-native';
 import Constants from 'expo-constants';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 const APP_NAME = 'Orario';
 const SUPPORT_URL = 'https://ko-fi.com/steven56';
@@ -47,52 +48,54 @@ export default function SettingsScreen({ visible, onClose, onClearCalendar }) {
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={goBack}>
-      <View style={styles.root}>
-        {page === 'menu' && (
-          <>
-            <Header title="Impostazioni" onBack={goBack} />
-            <View style={styles.list}>
-              <Pressable style={({ pressed }) => [styles.row, pressed && { opacity: 0.8 }]} onPress={() => setPage('general')}>
-                <Text style={styles.rowText}>Generale</Text>
-                <Text style={styles.chevron}>›</Text>
-              </Pressable>
-              <Pressable style={({ pressed }) => [styles.row, pressed && { opacity: 0.8 }]} onPress={() => setPage('about')}>
-                <Text style={styles.rowText}>Informazioni</Text>
-                <Text style={styles.chevron}>›</Text>
-              </Pressable>
-            </View>
-          </>
-        )}
+      <SafeAreaProvider>
+        <SafeAreaView edges={['bottom']} style={styles.root}>
+          {page === 'menu' && (
+            <>
+              <Header title="Impostazioni" onBack={goBack} />
+              <View style={styles.list}>
+                <Pressable style={({ pressed }) => [styles.row, pressed && { opacity: 0.8 }]} onPress={() => setPage('general')}>
+                  <Text style={styles.rowText}>Generale</Text>
+                  <Text style={styles.chevron}>›</Text>
+                </Pressable>
+                <Pressable style={({ pressed }) => [styles.row, pressed && { opacity: 0.8 }]} onPress={() => setPage('about')}>
+                  <Text style={styles.rowText}>Informazioni</Text>
+                  <Text style={styles.chevron}>›</Text>
+                </Pressable>
+              </View>
+            </>
+          )}
 
-        {page === 'general' && (
-          <>
-            <Header title="Generale" onBack={goBack} />
-            <View style={styles.list}>
-              <Pressable style={({ pressed }) => [styles.dangerBtn, pressed && { opacity: 0.85 }]} onPress={confirmClear}>
-                <Text style={styles.dangerText}>Pulisci calendario</Text>
-              </Pressable>
-              <Text style={styles.note}>Elimina orario importato, corsi preferiti e modifiche ai corsi salvati su questo dispositivo.</Text>
-            </View>
-          </>
-        )}
+          {page === 'general' && (
+            <>
+              <Header title="Generale" onBack={goBack} />
+              <View style={styles.list}>
+                <Pressable style={({ pressed }) => [styles.dangerBtn, pressed && { opacity: 0.85 }]} onPress={confirmClear}>
+                  <Text style={styles.dangerText}>Pulisci calendario</Text>
+                </Pressable>
+                <Text style={styles.note}>Elimina orario importato, corsi preferiti e modifiche ai corsi salvati su questo dispositivo.</Text>
+              </View>
+            </>
+          )}
 
-        {page === 'about' && (
-          <>
-            <Header title="Informazioni" onBack={goBack} />
-            <View style={styles.aboutCenter}>
-              <Image source={require('../assets/logo_brera.png')} style={styles.logo} />
-              <Text style={styles.appName}>{APP_NAME}</Text>
-              <Text style={styles.version}>Versione {Constants.expoConfig?.version || '1.0.0'}</Text>
-            </View>
-            <View style={styles.supportArea}>
-              <Text style={styles.supportNote}>L&apos;app è completamente gratuita e open source, ma se vuoi darmi più di una pacca sulla spalla puoi offrirmi qualcosa su questo link!</Text>
-              <Pressable style={styles.supportBtn} onPress={() => Linking.openURL(SUPPORT_URL)} accessibilityRole="link">
-                <Text style={styles.supportText}>ko-fi</Text>
-              </Pressable>
-            </View>
-          </>
-        )}
-      </View>
+          {page === 'about' && (
+            <>
+              <Header title="Informazioni" onBack={goBack} />
+              <View style={styles.aboutCenter}>
+                <Image source={require('../assets/logo_brera.png')} style={styles.logo} />
+                <Text style={styles.appName}>{APP_NAME}</Text>
+                <Text style={styles.version}>Versione {Constants.expoConfig?.version || '1.0.0'}</Text>
+              </View>
+              <View style={styles.supportArea}>
+                <Text style={styles.supportNote}>L&apos;app è completamente gratuita e open source, ma se vuoi darmi più di una pacca sulla spalla puoi offrirmi qualcosa su questo link!</Text>
+                <Pressable style={styles.supportBtn} onPress={() => Linking.openURL(SUPPORT_URL)} accessibilityRole="link">
+                  <Text style={styles.supportText}>ko-fi</Text>
+                </Pressable>
+              </View>
+            </>
+          )}
+        </SafeAreaView>
+      </SafeAreaProvider>
     </Modal>
   );
 }

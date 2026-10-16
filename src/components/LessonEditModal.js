@@ -11,6 +11,7 @@ import {
   Alert,
   View,
 } from 'react-native';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import CourseColorSelector from './CourseColorSelector';
 import { DAYS, DAY_SHORT } from '../constants/schedule';
 
@@ -115,9 +116,10 @@ export default function LessonEditModal({ visible, lesson, color, isCustom = fal
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onCancel}>
-      <KeyboardAvoidingView style={styles.overlay} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <Pressable style={StyleSheet.absoluteFill} onPress={onCancel} />
-        <View style={styles.sheet}>
+      <SafeAreaProvider>
+        <KeyboardAvoidingView style={styles.overlay} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={onCancel} />
+          <SafeAreaView edges={['bottom']} style={styles.sheet}>
           <View style={styles.modalHeader}>
             <View style={styles.handle} />
             <View style={styles.titleRow}>
@@ -242,8 +244,9 @@ export default function LessonEditModal({ visible, lesson, color, isCustom = fal
               <Text style={styles.btnPrimaryText}>Salva modifiche</Text>
             </Pressable>
           </View>
-        </View>
-      </KeyboardAvoidingView>
+          </SafeAreaView>
+        </KeyboardAvoidingView>
+      </SafeAreaProvider>
     </Modal>
   );
 }
