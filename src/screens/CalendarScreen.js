@@ -1,8 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import { Alert, Animated, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
-import { DAYS, DAY_SHORT, LEVEL_HEX } from './parser';
-import { END_H, START_H, layoutDay } from './calendarLayout';
-import LessonEditModal from './LessonEditModal';
+import { DAYS, DAY_SHORT, LEVEL_HEX } from '../constants/schedule';
+import { END_H, START_H, layoutDay } from '../utils/calendarLayout';
+import LessonEditModal from '../components/LessonEditModal';
 
 const HOUR_H = 64; // altezza di un'ora (px)
 const GUTTER = 46; // larghezza colonna orari
@@ -191,7 +191,6 @@ export default function CalendarView({ schedule, favorites, onToggle, edits = {}
         lesson={editing}
         color={courseColors[editing?.rowId]}
         isCustom={editing?.custom}
-        isNew={editing?.isNew}
         onCancel={() => setEditing(null)}
         onDelete={(lesson) => {
           if (lesson.isNew) {
@@ -288,9 +287,6 @@ const styles = StyleSheet.create({
   chipText: { fontSize: 12, fontWeight: '600', color: '#374151' },
   addLessonButton: { borderRadius: 999, paddingHorizontal: 12, paddingVertical: 5, backgroundColor: '#DBEAFE' },
   addLessonText: { fontSize: 12, fontWeight: '700', color: '#1D4ED8' },
-  legend: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 },
-  dot: { width: 12, height: 12, borderRadius: 6 },
-  legendText: { fontSize: 12, color: '#374151', marginRight: 10 },
   hint: { color: '#6B7280', fontSize: 14, marginBottom: 10 },
   tip: { color: '#9CA3AF', fontSize: 11, marginBottom: 6 },
   stickyDayHeader: {

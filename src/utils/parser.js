@@ -2,14 +2,13 @@
 // Converte i dati grezzi del PDF (testo con coordinate + rettangoli colorati)
 // in una matrice strutturata: scheduleMatrix = [{ subject, professor, level, tags, slots: [...] }]
 //
+import { DAYS, LEVEL_HEX } from '../constants/schedule';
+
 // Layout atteso (come nel PDF di esempio):
 //  - a sinistra: colonna MATERIE E DOCENTI (materia, docente, piccoli box livello)
 //  - a destra: 6 blocchi (Lunedì..Sabato); ogni blocco ha l'asse orario in orizzontale,
 //    11 celle da 1h (8-19), il Sabato 6 celle (8-14)
 //  - le celle colorate indicano le ore occupate; il testo nella cella è l'aula/dettaglio
-
-export const DAYS = ['Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato'];
-export const DAY_SHORT = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab'];
 
 const DAY_RE = [/^LUNEDI/, /^MARTEDI/, /^MERCOLEDI/, /^GIOVEDI/, /^VENERDI/, /^SABATO/];
 const HOUR_RE = /^(8|9|1[0-9])$/;
@@ -20,7 +19,6 @@ const LEVEL_DEFS = [
 ];
 
 // Colori ufficiali dei livelli (usati sia per riconoscere i box nel PDF sia per la UI)
-export const LEVEL_HEX = { Triennio: '#99CC00', Biennio: '#99CCFF' };
 const CANON_REFS = [
   { label: 'Triennio', color: [153, 204, 0] },
   { label: 'Biennio', color: [153, 204, 255] },

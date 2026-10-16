@@ -12,7 +12,7 @@ import {
   View,
 } from 'react-native';
 import CourseColorSelector from './CourseColorSelector';
-import { DAYS, DAY_SHORT } from './parser';
+import { DAYS, DAY_SHORT } from '../constants/schedule';
 
 const MIN_H = 8; // 08:00
 const MAX_H = 19; // 19:00
@@ -71,7 +71,7 @@ function TimeField({ label, value, onChange }) {
  *  - onDelete(lesson): elimina solo la lezione selezionata
  *  - onCancel(): chiusura senza salvare
  */
-export default function LessonEditModal({ visible, lesson, color, isCustom = false, isNew = false, onSave, onDelete, onCancel }) {
+export default function LessonEditModal({ visible, lesson, color, isCustom = false, onSave, onDelete, onCancel }) {
   const [title, setTitle] = useState(() => lesson?.subject || '');
   const [professor, setProfessor] = useState(() => lesson?.professor || '');
   const [room, setRoom] = useState(() => lesson?.details || '');

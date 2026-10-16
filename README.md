@@ -25,6 +25,23 @@ npx expo start
 
 Scansiona il QR code con Expo Go oppure avvia il progetto con `npx expo start --ios` o `npx expo start --android`.
 
+## Struttura del progetto
+
+```text
+src/
+  assets/       immagini usate dall'app e dalla configurazione Expo
+  components/   componenti riutilizzabili e modal
+  constants/    giorni e colori condivisi
+  navigation/   barra delle schede
+  screens/      viste Lista, Calendario, Aule, Profilo e Impostazioni
+  services/     persistenza, estrazione PDF e disponibilità aule
+  utils/        parsing PDF e layout del calendario
+  App.js        composizione dell'app e flussi di importazione
+index.js        registrazione Expo dell'app
+```
+
+Le schermate sono componenti React Native e la navigazione a schede resta gestita dall'app; gli import di `CourseColorSelector` risolvono automaticamente le varianti `.android.js` e `.ios.js`.
+
 ## Dati e privacy
 
 Non sono necessarie chiavi API o variabili d'ambiente per eseguire l'app. Orari importati, preferiti, profilo e modifiche vengono conservati sul dispositivo tramite AsyncStorage; il progetto non configura un backend o un servizio di analytics.

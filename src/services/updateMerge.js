@@ -5,7 +5,8 @@
 //   diversi da quelli del PDF precedente; note, colore e titolo scelti dall'utente restano;
 // - per ogni preferito con dati diversi restituisce l'elenco delle differenze (avviso ⚠️).
 
-import { norm, DAYS } from './parser';
+import { norm } from '../utils/parser';
+import { DAYS } from '../constants/schedule';
 
 const sameProf = (a, b) => norm(a || '') === norm(b || '');
 const lessonsOf = (row, d, kind) => {

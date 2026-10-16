@@ -14,14 +14,16 @@ import {
 import * as DocumentPicker from 'expo-document-picker';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
-import { extractorHtml } from './pdfExtractor';
-import { parseSchedule, norm, DAY_SHORT, LEVEL_HEX } from './parser';
-import CalendarView from './CalendarView';
-import RoomAvailabilityScreen from './RoomAvailabilityScreen';
-import { usePersistentState, setCodec, clearCalendarData } from './storage';
-import SettingsScreen from './SettingsScreen';
-import ProfileScreen from './ProfileScreen';
-import { mergeSchedules } from './updateMerge';
+import { extractorHtml } from './services/pdfExtractor';
+import { parseSchedule, norm } from './utils/parser';
+import ScheduleCard from './components/ScheduleCard';
+import TabBar from './navigation/TabBar';
+import CalendarScreen from './screens/CalendarScreen';
+import RoomAvailabilityScreen from './screens/RoomAvailabilityScreen';
+import { usePersistentState, setCodec, clearCalendarData } from './services/storage';
+import SettingsScreen from './screens/SettingsScreen';
+import ProfileScreen from './screens/ProfileScreen';
+import { mergeSchedules } from './services/updateMerge';
 
 // SDK 54+: la vecchia API (readAsStringAsync, copyAsync...) sta in 'expo-file-system/legacy'.
 // Su SDK precedenti il fallback usa il modulo principale.
@@ -53,7 +55,6 @@ const askImportMode = () =>
 // copiato il file nella cache, quindi la copia manuale non è sempre necessaria).
 async function readPdfBase64(asset) {
   const uri = asset.uri;
-  console.log('[orario] uri selezionato:', uri);
   const errors = [];
 
   // 1) lettura diretta (file:// in cache o content://)
@@ -88,98 +89,6 @@ async function readPdfBase64(asset) {
 
   throw new Error(errors.join(' | '));
 }
-
-/* ------------------------------ Card ------------------------------ */
-
-const ScheduleCard = React.memo(function ScheduleCard({ item, isFav, onToggle, changes, onShowChanges }) {
-  // Triennio = verde fluo #99CC00, Biennio = blu #99CCFF
-  const levelHex = LEVEL_HEX[item.level];
-  const bg = levelHex || '#E5E7EB';
-  const fg = '#111827';
-  return (
-    <View style={[styles.card, { borderColor: levelHex || 'transparent' }]}>
-      <View style={styles.cardHead}>
-        <Text style={[styles.subject, { flex: 1 }]}>{item.subject}</Text>
-        <Pressable
-          onPress={() => onToggle(item.id)}
-          hitSlop={12}
-          accessibilityRole="button"
-          accessibilityLabel={isFav ? 'Rimuovi dai preferiti' : 'Aggiungi ai preferiti'}
-        >
-          <Text style={[styles.star, isFav && styles.starOn]}>{isFav ? '★' : '☆'}</Text>
-        </Pressable>
-      </View>
-
-      <View style={styles.badgeRow}>
-        <View style={[styles.badge, { backgroundColor: bg }]}>
-          <Text style={[styles.badgeText, { color: fg }]}>{item.level}</Text>
-        </View>
-        {item.tags.map((t, i) => (
-          <View key={i} style={[styles.badge, styles.badgeOutline]}>
-            <Text style={[styles.badgeText, { color: '#374151' }]}>{t}</Text>
-          </View>
-        ))}
-      </View>
-
-      {item.isAmbiguous && (
-        <View style={styles.warnBox}>
-          <Text style={styles.warnTitle}>⚠️ Possibile errore di lettura - Verificare sul PDF originale</Text>
-          <Text style={styles.warnPage}>Pagina {item.pageNo} del PDF</Text>
-          {item.ambiguityReasons.map((r, i) => (
-            <Text key={i} style={styles.warnReason}>• {r}</Text>
-          ))}
-        </View>
-      )}
-
-      <Text style={styles.professor}>{item.professor || 'Docente non indicato'}</Text>
-
-      <View style={styles.slots}>
-        {item.days.length === 0 ? (
-          <Text style={styles.noSlot}>Orario non rilevato nel PDF</Text>
-        ) : (
-          item.days.map((d) => (
-            <View key={d.dayIndex} style={styles.slotRow}>
-              <View style={styles.dayPill}>
-                <Text style={styles.dayPillText}>{DAY_SHORT[d.dayIndex]}</Text>
-              </View>
-              <View style={{ flex: 1, gap: 2 }}>
-                {d.lessons.map((s, i) => (
-                  <View key={`l${i}`}>
-                    <Text style={styles.slotTime}>
-                      {s.startLabel} – {s.endLabel}
-                      <Text style={styles.kindText}>  Lezione</Text>
-                    </Text>
-                    {!!s.details && <Text style={styles.slotDetails}>{s.details}</Text>}
-                  </View>
-                ))}
-                {d.ricevimenti.map((s, i) => (
-                  <View key={`r${i}`}>
-                    <Text style={styles.riTime}>
-                      Ricevimento {s.startLabel} – {s.endLabel}
-                    </Text>
-                    {!!s.details && <Text style={styles.slotDetails}>{s.details}</Text>}
-                  </View>
-                ))}
-              </View>
-            </View>
-          ))
-        )}
-      </View>
-
-      {isFav && !!changes?.length && (
-        <Pressable
-          onPress={() => onShowChanges(item.id)}
-          hitSlop={10}
-          style={styles.changedBtn}
-          accessibilityRole="button"
-          accessibilityLabel="Dati cambiati rispetto al PDF precedente"
-        >
-          <Text style={styles.changedIcon}>⚠️</Text>
-        </Pressable>
-      )}
-    </View>
-  );
-});
 
 /* ------------------------------ App ------------------------------ */
 
@@ -524,7 +433,7 @@ function AppContent() {
 
       {tab === 'rooms' && <RoomAvailabilityScreen schedule={schedule} />}
 
-      {tab === 'calendar' && <CalendarView schedule={schedule} favorites={favorites} onToggle={toggleFav} edits={edits} courseColors={courseColors} onEdit={editLesson} onSetCourseColor={setCourseColor} />}
+      {tab === 'calendar' && <CalendarScreen schedule={schedule} favorites={favorites} onToggle={toggleFav} edits={edits} courseColors={courseColors} onEdit={editLesson} onSetCourseColor={setCourseColor} />}
 
       {/* WebView nascosta: esegue pdf.js solo durante l'importazione */}
       {pdfB64 && (
@@ -542,19 +451,7 @@ function AppContent() {
         </View>
       )}
 
-      <View style={styles.tabBar}>
-        <Pressable style={[styles.tabBtn, tab === 'list' && styles.tabBtnOn]} onPress={() => setTab('list')}>
-          <Text style={[styles.tabText, tab === 'list' && styles.tabTextOn]}>Lista</Text>
-        </Pressable>
-        <Pressable style={[styles.tabBtn, tab === 'calendar' && styles.tabBtnOn]} onPress={() => setTab('calendar')}>
-          <Text style={[styles.tabText, tab === 'calendar' && styles.tabTextOn]}>
-            Calendario{favorites.size ? `  ★ ${favorites.size}` : ''}
-          </Text>
-        </Pressable>
-        <Pressable style={[styles.tabBtn, tab === 'rooms' && styles.tabBtnOn]} onPress={() => setTab('rooms')}>
-          <Text style={[styles.tabText, tab === 'rooms' && styles.tabTextOn]}>Aule</Text>
-        </Pressable>
-      </View>
+      <TabBar tab={tab} onTabChange={setTab} favoriteCount={favorites.size} />
 
       <SettingsScreen key={`settings-${showSettings ? 'open' : 'closed'}`} visible={showSettings} onClose={() => setShowSettings(false)} onClearCalendar={handleClearCalendar} />
       <ProfileScreen
@@ -595,45 +492,9 @@ const styles = StyleSheet.create({
     fontSize: 16, color: '#111827', borderWidth: 1, borderColor: '#E5E7EB',
   },
   count: { color: '#6B7280', fontSize: 12, marginVertical: 8 },
-  card: {
-    backgroundColor: '#fff', borderRadius: 14, padding: 14, marginBottom: 10, borderWidth: 2,
-    shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 2,
-  },
-  changedBtn: { alignSelf: 'flex-end', marginTop: 8 },
-  changedIcon: { fontSize: 22 },
-  cardHead: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
-  star: { fontSize: 28, lineHeight: 30, color: '#9CA3AF' },
-  starOn: { color: '#F59E0B' },
-  tabBar: { flexDirection: 'row', backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: '#E5E7EB', marginHorizontal: -16, paddingBottom: 6 },
-  tabBtn: { flex: 1, alignItems: 'center', paddingVertical: 12, borderTopWidth: 3, borderTopColor: 'transparent' },
-  tabBtnOn: { borderTopColor: '#2563EB' },
-  tabText: { fontSize: 14, fontWeight: '600', color: '#6B7280' },
-  tabTextOn: { color: '#2563EB' },
-  subject: { fontSize: 16, fontWeight: '700', color: '#111827' },
-  badgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 },
-  badge: { borderRadius: 999, paddingHorizontal: 10, paddingVertical: 3 },
-  badgeOutline: { backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#D1D5DB' },
-  badgeText: { fontSize: 12, fontWeight: '600' },
-  professor: { marginTop: 10, fontSize: 14, color: '#374151', fontWeight: '600' },
-  slots: { marginTop: 10, gap: 8 },
-  noSlot: { color: '#9CA3AF', fontStyle: 'italic', fontSize: 13 },
-  slotRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  dayPill: { backgroundColor: '#DBEAFE', borderRadius: 8, paddingVertical: 4, width: 44, alignItems: 'center' },
-  dayPillRi: { backgroundColor: '#FEF3C7' },
-  dayPillText: { fontSize: 12, fontWeight: '700', color: '#1E3A8A' },
-  slotTime: { fontSize: 14, color: '#111827', fontWeight: '600' },
-  kindText: { fontSize: 12, color: '#6B7280', fontWeight: '500' },
-  warnBox: { marginTop: 10, backgroundColor: '#FEF3C7', borderColor: '#F59E0B', borderWidth: 1, borderRadius: 10, padding: 10 },
-  warnTitle: { color: '#92400E', fontWeight: '700', fontSize: 13 },
-  warnPage: { color: '#92400E', fontSize: 12, marginTop: 2 },
-  warnReason: { color: '#92400E', fontSize: 12, marginTop: 2 },
-  riTime: { fontSize: 13, color: '#B45309', fontWeight: '600' },
-  slotDetails: { fontSize: 13, color: '#6B7280', marginTop: 1 },
   empty: { alignItems: 'center', paddingVertical: 48, paddingHorizontal: 24, gap: 8 },
   emptyTitle: { fontSize: 18, fontWeight: '700', color: '#374151' },
   hiddenWeb: { position: 'absolute', width: 1, height: 1, opacity: 0, left: -10, top: -10 },
 });
-
-
 
 

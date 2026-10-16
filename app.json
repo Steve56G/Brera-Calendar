@@ -4,13 +4,13 @@
     "slug": "orario-app",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./logo_brera.png",
+    "icon": "./src/assets/logo_brera.png",
     "userInterfaceStyle": "light",
     "plugins": [
       [
         "expo-splash-screen",
         {
-          "image": "./logo_brera.png",
+          "image": "./src/assets/logo_brera.png",
           "imageWidth": 200,
           "backgroundColor": "#F3F4F6"
         }
@@ -30,7 +30,7 @@
       "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#E6E6E6",
-        "foregroundImage": "./logo_brera.png"
+        "foregroundImage": "./src/assets/logo_brera.png"
       },
       "blockedPermissions": [
         "android.permission.READ_EXTERNAL_STORAGE",
@@ -40,7 +40,7 @@
       ]
     },
     "web": {
-      "favicon": "./logo_brera.png"
+      "favicon": "./src/assets/logo_brera.png"
     },
     "extra": {
       "eas": {

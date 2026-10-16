@@ -80,7 +80,7 @@ export default function SettingsScreen({ visible, onClose, onClearCalendar }) {
           <>
             <Header title="Informazioni" onBack={goBack} />
             <View style={styles.aboutCenter}>
-              <Image source={require('./logo_brera.png')} style={styles.logo} />
+              <Image source={require('../assets/logo_brera.png')} style={styles.logo} />
               <Text style={styles.appName}>{APP_NAME}</Text>
               <Text style={styles.version}>Versione {Constants.expoConfig?.version || '1.0.0'}</Text>
             </View>

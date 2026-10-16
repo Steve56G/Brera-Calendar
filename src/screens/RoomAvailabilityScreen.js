@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import { FlatList, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import { DAYS, DAY_SHORT, norm } from './parser';
-import { buildRoomIndex, SLOT_HOURS } from './roomAvailability';
+import { DAYS, DAY_SHORT } from '../constants/schedule';
+import { norm } from '../utils/parser';
+import { buildRoomIndex, SLOT_HOURS } from '../services/roomAvailability';
 
 const pad = (h) => `${String(h).padStart(2, '0')}:00`;
 const todayIndex = () => {

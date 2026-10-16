@@ -3,8 +3,8 @@
 // Non tocca il parser: le aule si ricavano dal testo `details` delle lezioni
 // (es. "Aula 6 · anat. art 1", "Sala Napoleonica", "San Carpoforo").
 
-import { norm } from './parser';
-import { START_H, END_H } from './calendarLayout';
+import { norm } from '../utils/parser';
+import { START_H, END_H } from '../utils/calendarLayout';
 
 export const SLOT_HOURS = Array.from({ length: END_H - START_H }, (_, i) => START_H + i); // 8..18 (fino alle 19:00)
 

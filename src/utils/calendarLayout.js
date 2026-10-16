@@ -45,6 +45,3 @@ export function layoutDay(events) {
   flush();
   return out;
 }
-
-/** Numero massimo di sotto-colonne necessarie in un giorno. */
-export const maxCols = (laidOut) => laidOut.reduce((m, e) => Math.max(m, e.cols), 1);
