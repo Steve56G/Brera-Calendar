@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Alert, Animated, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
-import { DAYS, DAY_SHORT, LEVEL_HEX } from '../constants/schedule';
+import { DAYS, LEVEL_HEX } from '../constants/schedule';
+import { useTranslation } from '../i18n/LanguageProvider';
 import { END_H, START_H, layoutDay } from '../utils/calendarLayout';
 import LessonEditModal from '../components/LessonEditModal';
 
@@ -13,6 +14,7 @@ const HOURS = Array.from({ length: END_H - START_H + 1 }, (_, i) => START_H + i)
 const pad = (h) => `${String(h).padStart(2, '0')}:00`;
 
 export default function CalendarView({ schedule, favorites, onToggle, edits = {}, courseColors = {}, onEdit, onSetCourseColor }) {
+  const { t, dayShort } = useTranslation();
   const { width } = useWindowDimensions();
   const [showRi, setShowRi] = useState(false);
   const [editing, setEditing] = useState(null); // evento aperto nel modal di modifica
@@ -89,22 +91,22 @@ export default function CalendarView({ schedule, favorites, onToggle, edits = {}
     <View style={{ flex: 1 }}>
       <View style={styles.topRow}>
         <Text style={styles.count}>
-          {favRows.length} {favRows.length === 1 ? 'corso preferito' : 'corsi preferiti'}
+          {t('calendar.favoriteCount', { count: favRows.length })}
         </Text>
         <Pressable onPress={() => setShowRi((v) => !v)} style={[styles.chip, showRi && styles.chipOn]} hitSlop={8}>
-          <Text style={[styles.chipText, showRi && { color: '#92400E' }]}>Ricevimenti</Text>
+          <Text style={[styles.chipText, showRi && { color: '#92400E' }]}>{t('calendar.officeHours')}</Text>
         </Pressable>
         <Pressable onPress={addLesson} style={styles.addLessonButton} accessibilityRole="button">
-          <Text style={styles.addLessonText}>+ Lezione</Text>
+          <Text style={styles.addLessonText}>{t('calendar.addLesson')}</Text>
         </Pressable>
       </View>
 
       {favRows.length === 0 && (
         <Text style={styles.hint}>
-          Nessun corso nei preferiti. Tocca la stella ☆ su un corso nella lista: tutte le sue lezioni compariranno qui.
+          {t('calendar.emptyHint')}
         </Text>
       )}
-      {favRows.length > 0 && <Text style={styles.tip}>Tocca un box per modificarlo. Tieni premuto per rimuovere il corso dai preferiti.</Text>}
+      {favRows.length > 0 && <Text style={styles.tip}>{t('calendar.tip')}</Text>}
 
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -132,7 +134,7 @@ export default function CalendarView({ schedule, favorites, onToggle, edits = {}
               {DAYS.map((d, i) => (
                 <View key={d} style={{ width: dayW[i] + (i < DAYS.length - 1 ? DAY_GAP : 0), height: HEADER_H, alignItems: 'center', justifyContent: 'center' }}>
                   <View style={[styles.dayPill, { width: dayW[i] - 12 }]}>
-                    <Text style={styles.dayPillText}>{DAY_SHORT[i]}</Text>
+                    <Text style={styles.dayPillText}>{dayShort(i)}</Text>
                   </View>
                 </View>
               ))}
@@ -228,6 +230,7 @@ export default function CalendarView({ schedule, favorites, onToggle, edits = {}
 const pick = (s) => ({ start: s.start, end: s.end, startLabel: s.startLabel, endLabel: s.endLabel, details: s.details });
 
 const EventBox = React.memo(function EventBox({ ev, colW, onRemove, onEdit }) {
+  const { t, room: roomText } = useTranslation();
   const subW = colW / ev.cols;
   const h = (ev.end - ev.start) * HOUR_H - 2;
   const isRi = ev.kind === 'ricevimento';
@@ -240,11 +243,11 @@ const EventBox = React.memo(function EventBox({ ev, colW, onRemove, onEdit }) {
       onPress={() => onEdit(ev)}
       onLongPress={!ev.custom ? () =>
         Alert.alert(
-          'Rimuovere il corso dai preferiti?',
-          `Vuoi rimuovere ${ev.subject} dai preferiti? Tutte le sue lezioni scompariranno dal calendario.`,
+          t('calendar.removeTitle'),
+          t('calendar.removeMessage', { subject: ev.subject }),
           [
-            { text: 'Annulla', style: 'cancel' },
-            { text: 'Rimuovi', style: 'destructive', onPress: () => onRemove(ev.rowId) },
+            { text: t('common.cancel'), style: 'cancel' },
+            { text: t('calendar.remove'), style: 'destructive', onPress: () => onRemove(ev.rowId) },
           ]
         ) : undefined}
       delayLongPress={450}
@@ -262,7 +265,7 @@ const EventBox = React.memo(function EventBox({ ev, colW, onRemove, onEdit }) {
       ]}
     >
       <Text style={styles.evTitle} numberOfLines={lines}>
-        {isRi ? 'Ricevimento · ' : ''}
+        {isRi ? t('calendar.officeHoursPrefix') : ''}
         {ev.subject}
       </Text>
       {h > 44 && (
@@ -272,7 +275,7 @@ const EventBox = React.memo(function EventBox({ ev, colW, onRemove, onEdit }) {
       )}
       {h > 62 && !!ev.details && (
         <Text style={styles.evDetails} numberOfLines={2}>
-          {ev.details}
+          {roomText(ev.details)}
         </Text>
       )}
     </Pressable>
@@ -314,3 +317,6 @@ const styles = StyleSheet.create({
   evTime: { fontSize: 10, fontWeight: '600', color: '#111827', marginTop: 1 },
   evDetails: { fontSize: 10, color: '#374151', marginTop: 1 },
 });
+
+
+

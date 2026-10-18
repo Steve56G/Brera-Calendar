@@ -13,22 +13,22 @@ const lessonsOf = (row, d, kind) => {
   const day = row.days.find((x) => x.dayIndex === d);
   return (kind === 'l' ? day?.lessons : day?.ricevimenti) || [];
 };
-const fmtList = (list) => (list.length ? list.map((l) => `${l.startLabel}–${l.endLabel}`).join(', ') : 'nessuna lezione');
+const fmtList = (list) => list.map((l) => `${l.startLabel}–${l.endLabel}`).join(', ');
 
 function diffRows(oldRow, newRow) {
   const out = [];
   if (!sameProf(oldRow.professor, newRow.professor)) {
-    out.push(`Professore: ${oldRow.professor || '—'} → ${newRow.professor || '—'}`);
+    out.push({ type: 'professor', from: oldRow.professor || '', to: newRow.professor || '' });
   }
   for (let d = 0; d < DAYS.length; d++) {
     const o = lessonsOf(oldRow, d, 'l');
     const n = lessonsOf(newRow, d, 'l');
     if (!o.length && !n.length) continue;
     const timesChanged = o.length !== n.length || o.some((s, i) => s.start !== n[i].start || s.end !== n[i].end);
-    if (timesChanged) out.push(`${DAYS[d]}: ${fmtList(o)} → ${fmtList(n)}`);
+    if (timesChanged) out.push({ type: 'time', day: d, from: fmtList(o), to: fmtList(n) });
     const od = o.map((s) => s.details || '').join(' / ');
     const nd = n.map((s) => s.details || '').join(' / ');
-    if (od !== nd) out.push(`Aula ${DAYS[d]}: ${od || '—'} → ${nd || '—'}`);
+    if (od !== nd) out.push({ type: 'room', day: d, from: od, to: nd });
   }
   return out;
 }
@@ -88,3 +88,6 @@ export function mergeSchedules(oldSchedule, newSchedule, favorites, edits, cours
 
   return { favorites: nextFav, edits: nextEdits, courseColors: nextColors, changes, missing };
 }
+
+
+

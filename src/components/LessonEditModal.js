@@ -13,7 +13,8 @@ import {
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import CourseColorSelector from './CourseColorSelector';
-import { DAYS, DAY_SHORT } from '../constants/schedule';
+import { DAYS } from '../constants/schedule';
+import { useTranslation } from '../i18n/LanguageProvider';
 
 const MIN_H = 8; // 08:00
 const MAX_H = 19; // 19:00
@@ -34,6 +35,7 @@ const parseTime = (t) => {
 };
 
 function TimeField({ label, value, onChange }) {
+  const { t } = useTranslation();
   const step = (delta) => {
     const cur = parseTime(value);
     if (cur === null) return;
@@ -43,7 +45,7 @@ function TimeField({ label, value, onChange }) {
     <View style={styles.timeCol}>
       <Text style={styles.label}>{label}</Text>
       <View style={styles.stepper}>
-        <Pressable style={styles.stepBtn} onPress={() => step(-0.5)} hitSlop={6} accessibilityLabel={`${label} -30 minuti`}>
+        <Pressable style={styles.stepBtn} onPress={() => step(-0.5)} hitSlop={6} accessibilityLabel={t('lesson.minus30', { label })}>
           <Text style={styles.stepText}>−</Text>
         </Pressable>
         <TextInput
@@ -56,7 +58,7 @@ function TimeField({ label, value, onChange }) {
           maxLength={5}
           selectTextOnFocus
         />
-        <Pressable style={styles.stepBtn} onPress={() => step(0.5)} hitSlop={6} accessibilityLabel={`${label} +30 minuti`}>
+        <Pressable style={styles.stepBtn} onPress={() => step(0.5)} hitSlop={6} accessibilityLabel={t('lesson.plus30', { label })}>
           <Text style={styles.stepText}>+</Text>
         </Pressable>
       </View>
@@ -73,6 +75,7 @@ function TimeField({ label, value, onChange }) {
  *  - onCancel(): chiusura senza salvare
  */
 export default function LessonEditModal({ visible, lesson, color, isCustom = false, onSave, onDelete, onCancel }) {
+  const { t, dayName, dayShort } = useTranslation();
   const [title, setTitle] = useState(() => lesson?.subject || '');
   const [professor, setProfessor] = useState(() => lesson?.professor || '');
   const [room, setRoom] = useState(() => lesson?.details || '');
@@ -95,21 +98,21 @@ export default function LessonEditModal({ visible, lesson, color, isCustom = fal
     const name = title.trim();
     const s = parseTime(startT);
     const e = parseTime(endT);
-    if (!name) return setError('Inserisci un titolo.');
-    if (s === null || e === null) return setError('Orario non valido: usa il formato HH:MM con minuti 00 o 30.');
-    if (s < MIN_H || e > MAX_H) return setError(`L'orario deve essere compreso tra ${fmt(MIN_H)} e ${fmt(MAX_H)}.`);
-    if (e <= s) return setError("L'orario di fine deve essere successivo a quello di inizio.");
+    if (!name) return setError(t('lesson.errTitle'));
+    if (s === null || e === null) return setError(t('lesson.errTimeFormat'));
+    if (s < MIN_H || e > MAX_H) return setError(t('lesson.errTimeRange', { min: fmt(MIN_H), max: fmt(MAX_H) }));
+    if (e <= s) return setError(t('lesson.errTimeOrder'));
     setError('');
     onSave({ ...lesson, subject: name, professor: professor.trim(), details: room.trim(), note, color: selectedColor, dayIndex, start: s, end: e, startLabel: fmt(s), endLabel: fmt(e) });
   };
 
   const confirmDelete = () => {
     Alert.alert(
-      'Eliminare la lezione?',
-      'Verrà rimossa solo questa lezione. Le altre lezioni del corso resteranno nel calendario.',
+      t('lesson.deleteTitle'),
+      t('lesson.deleteMessage'),
       [
-        { text: 'Annulla', style: 'cancel' },
-        { text: 'Elimina', style: 'destructive', onPress: () => onDelete?.(lesson) },
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('common.delete'), style: 'destructive', onPress: () => onDelete?.(lesson) },
       ]
     );
   };
@@ -123,9 +126,9 @@ export default function LessonEditModal({ visible, lesson, color, isCustom = fal
           <View style={styles.modalHeader}>
             <View style={styles.handle} />
             <View style={styles.titleRow}>
-              <Text style={styles.heading}>Modifica lezione</Text>
-              <Pressable onPress={onCancel} hitSlop={10} accessibilityRole="button" accessibilityLabel="Annulla e chiudi">
-                <Text style={styles.cancelText}>Annulla</Text>
+              <Text style={styles.heading}>{t('lesson.heading')}</Text>
+              <Pressable onPress={onCancel} hitSlop={10} accessibilityRole="button" accessibilityLabel={t('lesson.cancelClose')}>
+                <Text style={styles.cancelText}>{t('common.cancel')}</Text>
               </Pressable>
             </View>
           </View>
@@ -138,56 +141,56 @@ export default function LessonEditModal({ visible, lesson, color, isCustom = fal
           >
             {isCustom && (
               <>
-                <Text style={styles.label}>Giorno</Text>
+                <Text style={styles.label}>{t('lesson.day')}</Text>
                 <View style={styles.daysRow}>
                   {DAYS.map((day, index) => (
                     <Pressable
                       key={day}
                       accessibilityRole="radio"
                       accessibilityState={{ checked: dayIndex === index }}
-                      accessibilityLabel={day}
+                      accessibilityLabel={dayName(index)}
                       onPress={() => setDayIndex(index)}
                       style={[styles.dayButton, dayIndex === index && styles.dayButtonSelected]}
                     >
-                      <Text style={[styles.dayButtonText, dayIndex === index && styles.dayButtonTextSelected]}>{DAY_SHORT[index]}</Text>
+                      <Text style={[styles.dayButtonText, dayIndex === index && styles.dayButtonTextSelected]}>{dayShort(index)}</Text>
                     </Pressable>
                   ))}
                 </View>
               </>
             )}
 
-            <Text style={styles.label}>Titolo</Text>
+            <Text style={styles.label}>{t('lesson.title')}</Text>
             <TextInput
               style={styles.input}
               value={title}
               onChangeText={setTitle}
-              placeholder="Titolo della lezione"
+              placeholder={t('lesson.titlePlaceholder')}
               placeholderTextColor="#9CA3AF"
               returnKeyType="done"
               multiline={false}
             />
 
-            <Text style={styles.label}>Professore</Text>
+            <Text style={styles.label}>{t('lesson.professor')}</Text>
             <TextInput
               style={styles.input}
               value={professor}
               onChangeText={setProfessor}
-              placeholder="Nome del professore"
+              placeholder={t('lesson.professorPlaceholder')}
               placeholderTextColor="#9CA3AF"
               returnKeyType="done"
             />
 
-            <Text style={styles.label}>Aula</Text>
+            <Text style={styles.label}>{t('lesson.room')}</Text>
             <TextInput
               style={styles.input}
               value={room}
               onChangeText={setRoom}
-              placeholder="Es. Aula 6"
+              placeholder={t('lesson.roomPlaceholder')}
               placeholderTextColor="#9CA3AF"
               returnKeyType="done"
             />
 
-            <Text style={styles.label}>Note</Text>
+            <Text style={styles.label}>{t('lesson.notes')}</Text>
             <View style={[styles.noteBox, { height: noteBoxHeight }]}>
               <ScrollView
                 style={styles.noteScroll}
@@ -206,7 +209,7 @@ export default function LessonEditModal({ visible, lesson, color, isCustom = fal
                     setNoteTextHeight((currentHeight) => currentHeight === contentHeight ? currentHeight : contentHeight);
                     setNoteBoxHeight((currentHeight) => currentHeight === nextBoxHeight ? currentHeight : nextBoxHeight);
                   }}
-                  placeholder="Aggiungi una nota"
+                  placeholder={t('lesson.notePlaceholder')}
                   placeholderTextColor="#9CA3AF"
                   multiline
                   editable={noteEditing}
@@ -219,18 +222,18 @@ export default function LessonEditModal({ visible, lesson, color, isCustom = fal
                     style={StyleSheet.absoluteFill}
                     onPress={() => setNoteEditing(true)}
                     accessibilityRole="button"
-                    accessibilityLabel="Tocca per modificare le note"
+                    accessibilityLabel={t('lesson.editNotes')}
                   />
                 )}
               </ScrollView>
             </View>
 
-            <Text style={styles.label}>{isCustom ? 'Colore della lezione' : 'Colore del corso (tutte le lezioni)'}</Text>
+            <Text style={styles.label}>{isCustom ? t('lesson.colorLesson') : t('lesson.colorCourse')}</Text>
             <CourseColorSelector color={selectedColor} onChange={setSelectedColor} />
 
             <View style={styles.timeRow}>
-              <TimeField label="Inizio" value={startT} onChange={setStartT} />
-              <TimeField label="Fine" value={endT} onChange={setEndT} />
+              <TimeField label={t('lesson.start')} value={startT} onChange={setStartT} />
+              <TimeField label={t('lesson.end')} value={endT} onChange={setEndT} />
             </View>
 
             {!!error && <Text style={styles.error}>{error}</Text>}
@@ -238,10 +241,10 @@ export default function LessonEditModal({ visible, lesson, color, isCustom = fal
 
           <View style={styles.actions}>
             <Pressable style={({ pressed }) => [styles.btn, styles.btnDanger, pressed && { opacity: 0.8 }]} onPress={confirmDelete}>
-              <Text style={styles.btnDangerText}>Elimina</Text>
+              <Text style={styles.btnDangerText}>{t('common.delete')}</Text>
             </Pressable>
             <Pressable style={({ pressed }) => [styles.btn, styles.btnPrimary, pressed && { opacity: 0.85 }]} onPress={handleSave}>
-              <Text style={styles.btnPrimaryText}>Salva modifiche</Text>
+              <Text style={styles.btnPrimaryText}>{t('lesson.save')}</Text>
             </Pressable>
           </View>
           </SafeAreaView>
@@ -298,3 +301,6 @@ const styles = StyleSheet.create({
   btnPrimary: { backgroundColor: '#2563EB' },
   btnPrimaryText: { color: '#fff', fontSize: 16, fontWeight: '700' },
 });
+
+
+

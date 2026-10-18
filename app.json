@@ -2,7 +2,7 @@
   "expo": {
     "name": "Brera Calendar",
     "slug": "orario-app",
-    "version": "1.0.3",
+    "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./src/assets/logo_brera.png",
     "userInterfaceStyle": "light",
@@ -15,7 +15,8 @@
           "backgroundColor": "#F3F4F6"
         }
       ],
-      "expo-font"
+      "expo-font",
+      "expo-localization"
     ],
     "ios": {
       "supportsTablet": true,

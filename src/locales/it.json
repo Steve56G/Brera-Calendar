@@ -1,0 +1,223 @@
+{
+  "app": {
+    "title": "Orario"
+  },
+  "tabs": {
+    "list": "Lista",
+    "calendar": "Calendario",
+    "rooms": "Aule"
+  },
+  "days": {
+    "long": {
+      "mon": "Lunedì",
+      "tue": "Martedì",
+      "wed": "Mercoledì",
+      "thu": "Giovedì",
+      "fri": "Venerdì",
+      "sat": "Sabato"
+    },
+    "short": {
+      "mon": "Lun",
+      "tue": "Mar",
+      "wed": "Mer",
+      "thu": "Gio",
+      "fri": "Ven",
+      "sat": "Sab"
+    }
+  },
+  "common": {
+    "back": "Indietro",
+    "cancel": "Annulla",
+    "close": "Chiudi",
+    "delete": "Elimina",
+    "done": "Fatto"
+  },
+  "languages": {
+    "it": "Italiano",
+    "en": "Inglese"
+  },
+  "header": {
+    "profile": "Profilo",
+    "settings": "Impostazioni",
+    "openProfile": "Apri profilo studente",
+    "openSettings": "Apri impostazioni"
+  },
+  "import": {
+    "select": "Seleziona PDF dell’orario",
+    "loadAnother": "Carica un altro PDF",
+    "copying": "Copia del file…",
+    "reading": "Lettura del PDF…",
+    "readingPage": "Lettura pagina %{current}/%{total}…",
+    "analyzing": "Analisi della griglia…",
+    "updatedTitle": "Calendario aggiornato",
+    "missingFavorites": {
+      "one": "%{count} corso preferito non presente nel nuovo PDF è stato rimosso dai preferiti.",
+      "other": "%{count} corsi preferiti non presenti nel nuovo PDF sono stati rimossi dai preferiti."
+    }
+  },
+  "importMode": {
+    "title": "Nuovo orario",
+    "message": "Esiste già un calendario. Cosa vuoi fare?",
+    "cancel": "Annulla",
+    "replace": "Pulisci calendario",
+    "update": "Aggiorna calendario"
+  },
+  "list": {
+    "idleHint": "Importa il PDF dell’orario per cercare materie e docenti.",
+    "errorTitle": "Qualcosa è andato storto",
+    "searchPlaceholder": "Cerca materia o professore…",
+    "results": {
+      "one": "%{count} risultato",
+      "other": "%{count} risultati"
+    },
+    "toVerify": "%{count} da verificare",
+    "noResults": "Nessun risultato",
+    "noRowsRecognized": "Nel PDF non sono state riconosciute righe. Verifica che sia un orario valido e riprova.",
+    "noMatch": "Nessuna materia o docente corrisponde a “%{query}”."
+  },
+  "errors": {
+    "timeout": "Timeout: pdf.js non ha risposto. Controlla la connessione internet e riprova.",
+    "openFile": "Impossibile aprire il file: %{message}",
+    "noRowsUpdate": "nessuna riga riconosciuta nel PDF, calendario non modificato",
+    "parsing": "Errore nel parsing: %{message}",
+    "unknownRead": "Errore sconosciuto durante la lettura del PDF.",
+    "webview": "Errore di caricamento della WebView.",
+    "pdfjsNotLoaded": "pdf.js non caricato: serve una connessione internet."
+  },
+  "changes": {
+    "title": "Dati cambiati rispetto al PDF precedente",
+    "markVerified": "Segna come verificato",
+    "professor": "Professore: %{from} → %{to}",
+    "time": "%{day}: %{from} → %{to}",
+    "room": "Aula %{day}: %{from} → %{to}",
+    "noLesson": "nessuna lezione"
+  },
+  "card": {
+    "addFavorite": "Aggiungi ai preferiti",
+    "removeFavorite": "Rimuovi dai preferiti",
+    "warnTitle": "⚠️ Possibile errore di lettura - Verificare sul PDF originale",
+    "warnPage": "Pagina %{page} del PDF",
+    "noProfessor": "Docente non indicato",
+    "professorTbd": "Docente da nominare (bando)",
+    "noSchedule": "Orario non rilevato nel PDF",
+    "lesson": "Lezione",
+    "officeHours": "Ricevimento"
+  },
+  "levels": {
+    "triennio": "Triennio",
+    "biennio": "Biennio",
+    "restauro": "Restauro",
+    "affini": "Attività affini",
+    "none": "Non indicato"
+  },
+  "tags": {
+    "year": "%{n}° anno",
+    "years": "%{a}° e %{b}° anno"
+  },
+  "data": {
+    "room": "Aula"
+  },
+  "reasons": {
+    "uncertainBoundary": "confine lezione/ricevimento incerto",
+    "overlappingCells": "celle sovrapposte con colori diversi",
+    "timeFromText": "orario dedotto dal testo senza cella colorata",
+    "overlappingSubBoxes": "sotto-box sovrapposti",
+    "adjacentSubBoxes": "sotto-box adiacenti con colori diversi",
+    "misalignedBorders": "bordi di cella non allineati alla griglia oraria",
+    "textOutsideGrid": "testo fuori dalla griglia oraria",
+    "overlappingText": "testo sovrapposto nelle celle",
+    "manyTextLines": "riga con molto testo: possibile unione di più materie",
+    "rowsFromText": "righe stimate dal testo (bordi di riga non trovati)",
+    "gridFromHeaders": "griglia oraria stimata dalle intestazioni dei giorni",
+    "overlappingSlots": "fasce orarie sovrapposte",
+    "lessonOfficeOverlap": "lezione e ricevimento sovrapposti",
+    "ambiguousLevelColor": "colore Triennio/Biennio/Restauro non univoco"
+  },
+  "calendar": {
+    "favoriteCount": {
+      "one": "%{count} corso preferito",
+      "other": "%{count} corsi preferiti"
+    },
+    "officeHours": "Ricevimenti",
+    "officeHoursPrefix": "Ricevimento · ",
+    "addLesson": "+ Lezione",
+    "emptyHint": "Nessun corso nei preferiti. Tocca la stella ☆ su un corso nella lista: tutte le sue lezioni compariranno qui.",
+    "tip": "Tocca un box per modificarlo. Tieni premuto per rimuovere il corso dai preferiti.",
+    "removeTitle": "Rimuovere il corso dai preferiti?",
+    "removeMessage": "Vuoi rimuovere %{subject} dai preferiti? Tutte le sue lezioni scompariranno dal calendario.",
+    "remove": "Rimuovi"
+  },
+  "rooms": {
+    "searchPlaceholder": "Cerca aula…",
+    "count": {
+      "one": "%{count} aula",
+      "other": "%{count} aule"
+    },
+    "noMatch": "Nessuna aula corrisponde alla ricerca.",
+    "noneDetected": "Nessuna aula rilevata nei dati del PDF.",
+    "importHint": "Importa il PDF dell’orario per vedere la disponibilità delle aule.",
+    "selectHint": "Seleziona un’aula per vedere le ore occupate.",
+    "busyHours": {
+      "one": "%{count} ora occupata",
+      "other": "%{count} ore occupate"
+    },
+    "freeHours": "%{count} libere"
+  },
+  "lesson": {
+    "heading": "Modifica lezione",
+    "cancelClose": "Annulla e chiudi",
+    "day": "Giorno",
+    "title": "Titolo",
+    "titlePlaceholder": "Titolo della lezione",
+    "professor": "Professore",
+    "professorPlaceholder": "Nome del professore",
+    "room": "Aula",
+    "roomPlaceholder": "Es. Aula 6",
+    "notes": "Note",
+    "notePlaceholder": "Aggiungi una nota",
+    "editNotes": "Tocca per modificare le note",
+    "colorLesson": "Colore della lezione",
+    "colorCourse": "Colore del corso (tutte le lezioni)",
+    "start": "Inizio",
+    "end": "Fine",
+    "minus30": "%{label} -30 minuti",
+    "plus30": "%{label} +30 minuti",
+    "save": "Salva modifiche",
+    "errTitle": "Inserisci un titolo.",
+    "errTimeFormat": "Orario non valido: usa il formato HH:MM con minuti 00 o 30.",
+    "errTimeRange": "L'orario deve essere compreso tra %{min} e %{max}.",
+    "errTimeOrder": "L'orario di fine deve essere successivo a quello di inizio.",
+    "deleteTitle": "Eliminare la lezione?",
+    "deleteMessage": "Verrà rimossa solo questa lezione. Le altre lezioni del corso resteranno nel calendario."
+  },
+  "colors": {
+    "default": "Predefinito",
+    "defaultColor": "Colore predefinito",
+    "color": "Colore %{color}",
+    "lightColor": "Colore chiaro %{color}",
+    "lightColors": "Colori chiari",
+    "showMore": "Mostra altri colori",
+    "hideMore": "Nascondi altri colori"
+  },
+  "profile": {
+    "firstName": "Nome",
+    "lastName": "Cognome",
+    "institutionalEmail": "Email istituzionale",
+    "studentId": "Matricola",
+    "degreeCourse": "Corso di laurea",
+    "save": "Salva profilo"
+  },
+  "settings": {
+    "general": "Generale",
+    "about": "Informazioni",
+    "clearCalendar": "Pulisci calendario",
+    "clearNote": "Elimina orario importato, corsi preferiti e modifiche ai corsi salvati su questo dispositivo.",
+    "clearTitle": "Pulire il calendario?",
+    "clearMessage": "Verranno eliminati l'orario importato, i corsi preferiti e tutte le modifiche alle lezioni. L'operazione non è reversibile.",
+    "clearConfirm": "Pulisci",
+    "clearDone": "I dati del calendario sono stati eliminati.",
+    "language": "Lingua",
+    "version": "Versione %{version}",
+    "supportNote": "L'app è completamente gratuita e open source, ma se vuoi darmi più di una pacca sulla spalla puoi offrirmi qualcosa su questo link!"
+  }
+}

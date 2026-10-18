@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from '../i18n/LanguageProvider';
 
 const COURSE_COLORS = ['#FCA5A5', '#86EFAC', '#93C5FD'];
 const LIGHT_COLORS = [
@@ -50,6 +51,7 @@ const PALETTE_COLORS = [
 ];
 
 export default function CourseColorSelector({ color, onChange }) {
+  const { t } = useTranslation();
   const [showPalette, setShowPalette] = useState(false);
 
   return (
@@ -59,14 +61,14 @@ export default function CourseColorSelector({ color, onChange }) {
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.lightColors}
         keyboardShouldPersistTaps="handled"
-        accessibilityLabel="Colori chiari"
+        accessibilityLabel={t('colors.lightColors')}
       >
         {LIGHT_COLORS.map((option) => (
           <Pressable
             key={option}
             accessibilityRole="radio"
             accessibilityState={{ checked: color === option }}
-            accessibilityLabel={`Colore chiaro ${option}`}
+            accessibilityLabel={t('colors.lightColor', { color: option })}
             onPress={() => onChange(option)}
             style={[styles.swatch, { backgroundColor: option }, color === option && styles.selected]}
           />
@@ -78,14 +80,14 @@ export default function CourseColorSelector({ color, onChange }) {
             key={option}
             accessibilityRole="radio"
             accessibilityState={{ checked: color === option }}
-            accessibilityLabel={`Colore ${option}`}
+            accessibilityLabel={t('colors.color', { color: option })}
             onPress={() => onChange(option)}
             style={[styles.swatch, { backgroundColor: option }, color === option && styles.selected]}
           />
         ))}
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={showPalette ? 'Nascondi altri colori' : 'Mostra altri colori'}
+          accessibilityLabel={showPalette ? t('colors.hideMore') : t('colors.showMore')}
           accessibilityState={{ expanded: showPalette }}
           onPress={() => setShowPalette((shown) => !shown)}
           style={[styles.moreButton, showPalette && styles.selected]}
@@ -95,11 +97,11 @@ export default function CourseColorSelector({ color, onChange }) {
         <Pressable
           accessibilityRole="radio"
           accessibilityState={{ checked: color == null }}
-          accessibilityLabel="Colore predefinito"
+          accessibilityLabel={t('colors.defaultColor')}
           onPress={() => onChange(null)}
           style={[styles.defaultColor, color == null && styles.selected]}
         >
-          <Text style={styles.defaultText}>Predefinito</Text>
+          <Text style={styles.defaultText}>{t('colors.default')}</Text>
         </Pressable>
       </View>
 
@@ -115,7 +117,7 @@ export default function CourseColorSelector({ color, onChange }) {
               key={option}
               accessibilityRole="radio"
               accessibilityState={{ checked: color === option }}
-              accessibilityLabel={`Colore ${option}`}
+              accessibilityLabel={t('colors.color', { color: option })}
               onPress={() => onChange(option)}
               style={[styles.swatch, { backgroundColor: option }, color === option && styles.selected]}
             />
@@ -156,3 +158,6 @@ const styles = StyleSheet.create({
   },
   defaultText: { color: '#374151', fontSize: 11, fontWeight: '600' },
 });
+
+
+

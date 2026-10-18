@@ -1,8 +1,10 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { DAY_SHORT, LEVEL_HEX } from '../constants/schedule';
+import { LEVEL_HEX } from '../constants/schedule';
+import { useTranslation } from '../i18n/LanguageProvider';
 
 const ScheduleCard = React.memo(function ScheduleCard({ item, isFav, onToggle, changes, onShowChanges }) {
+  const { t, dayShort, level: levelText, tag: tagText, reason: reasonText, professor: professorText, room: roomText } = useTranslation();
   const levelHex = LEVEL_HEX[item.level];
   const levelLabels = String(item.level || 'Non indicato').split(' + ').filter(Boolean);
   const fg = '#111827';
@@ -15,7 +17,7 @@ const ScheduleCard = React.memo(function ScheduleCard({ item, isFav, onToggle, c
           onPress={() => onToggle(item.id)}
           hitSlop={12}
           accessibilityRole="button"
-          accessibilityLabel={isFav ? 'Rimuovi dai preferiti' : 'Aggiungi ai preferiti'}
+          accessibilityLabel={isFav ? t('card.removeFavorite') : t('card.addFavorite')}
         >
           <Text style={[styles.star, isFav && styles.starOn]}>{isFav ? '★' : '☆'}</Text>
         </Pressable>
@@ -24,53 +26,53 @@ const ScheduleCard = React.memo(function ScheduleCard({ item, isFav, onToggle, c
       <View style={styles.badgeRow}>
         {levelLabels.map((level) => (
           <View key={`level-${level}`} style={[styles.badge, { backgroundColor: LEVEL_HEX[level] || '#E5E7EB' }]}>
-            <Text style={[styles.badgeText, { color: fg }]}>{level}</Text>
+            <Text style={[styles.badgeText, { color: fg }]}>{levelText(level)}</Text>
           </View>
         ))}
         {item.tags.map((tag, index) => (
           <View key={index} style={[styles.badge, styles.badgeOutline]}>
-            <Text style={[styles.badgeText, { color: '#374151' }]}>{tag}</Text>
+            <Text style={[styles.badgeText, { color: '#374151' }]}>{tagText(tag)}</Text>
           </View>
         ))}
       </View>
 
       {item.isAmbiguous && (
         <View style={styles.warnBox}>
-          <Text style={styles.warnTitle}>⚠️ Possibile errore di lettura - Verificare sul PDF originale</Text>
-          <Text style={styles.warnPage}>Pagina {item.pageNo} del PDF</Text>
+          <Text style={styles.warnTitle}>{t('card.warnTitle')}</Text>
+          <Text style={styles.warnPage}>{t('card.warnPage', { page: item.pageNo })}</Text>
           {item.ambiguityReasons.map((reason, index) => (
-            <Text key={index} style={styles.warnReason}>• {reason}</Text>
+            <Text key={index} style={styles.warnReason}>• {reasonText(reason)}</Text>
           ))}
         </View>
       )}
 
-      <Text style={styles.professor}>{item.professor || 'Docente non indicato'}</Text>
+      <Text style={styles.professor}>{professorText(item.professor) || t('card.noProfessor')}</Text>
 
       <View style={styles.slots}>
         {item.days.length === 0 ? (
-          <Text style={styles.noSlot}>Orario non rilevato nel PDF</Text>
+          <Text style={styles.noSlot}>{t('card.noSchedule')}</Text>
         ) : (
           item.days.map((day) => (
             <View key={day.dayIndex} style={styles.slotRow}>
               <View style={styles.dayPill}>
-                <Text style={styles.dayPillText}>{DAY_SHORT[day.dayIndex]}</Text>
+                <Text style={styles.dayPillText}>{dayShort(day.dayIndex)}</Text>
               </View>
               <View style={{ flex: 1, gap: 2 }}>
                 {day.lessons.map((lesson, index) => (
                   <View key={`l${index}`}>
                     <Text style={styles.slotTime}>
                       {lesson.startLabel} – {lesson.endLabel}
-                      <Text style={styles.kindText}>  Lezione</Text>
+                      <Text style={styles.kindText}>  {t('card.lesson')}</Text>
                     </Text>
-                    {!!lesson.details && <Text style={styles.slotDetails}>{lesson.details}</Text>}
+                    {!!lesson.details && <Text style={styles.slotDetails}>{roomText(lesson.details)}</Text>}
                   </View>
                 ))}
                 {day.ricevimenti.map((lesson, index) => (
                   <View key={`r${index}`}>
                     <Text style={styles.riTime}>
-                      Ricevimento {lesson.startLabel} – {lesson.endLabel}
+                      {t('card.officeHours')} {lesson.startLabel} – {lesson.endLabel}
                     </Text>
-                    {!!lesson.details && <Text style={styles.slotDetails}>{lesson.details}</Text>}
+                    {!!lesson.details && <Text style={styles.slotDetails}>{roomText(lesson.details)}</Text>}
                   </View>
                 ))}
               </View>
@@ -85,7 +87,7 @@ const ScheduleCard = React.memo(function ScheduleCard({ item, isFav, onToggle, c
           hitSlop={10}
           style={styles.changedBtn}
           accessibilityRole="button"
-          accessibilityLabel="Dati cambiati rispetto al PDF precedente"
+          accessibilityLabel={t('changes.title')}
         >
           <Text style={styles.changedIcon}>⚠️</Text>
         </Pressable>
@@ -126,3 +128,6 @@ const styles = StyleSheet.create({
 });
 
 export default ScheduleCard;
+
+
+

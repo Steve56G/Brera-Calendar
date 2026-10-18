@@ -1,10 +1,12 @@
 import React from 'react';
 import { Host, ColorPicker } from '@expo/ui/swift-ui';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from '../i18n/LanguageProvider';
 
 const COURSE_COLORS = ['#FCA5A5', '#86EFAC', '#93C5FD'];
 
 export default function CourseColorSelector({ color, onChange }) {
+  const { t } = useTranslation();
   return (
     <View style={styles.row}>
       {COURSE_COLORS.map((option) => (
@@ -12,7 +14,7 @@ export default function CourseColorSelector({ color, onChange }) {
           key={option}
           accessibilityRole="radio"
           accessibilityState={{ checked: color === option }}
-          accessibilityLabel={`Colore ${option}`}
+          accessibilityLabel={t('colors.color', { color: option })}
           onPress={() => onChange(option)}
           style={[styles.swatch, { backgroundColor: option }, color === option && styles.selected]}
         />
@@ -23,11 +25,11 @@ export default function CourseColorSelector({ color, onChange }) {
       <Pressable
         accessibilityRole="radio"
         accessibilityState={{ checked: color === null }}
-        accessibilityLabel="Colore predefinito"
+        accessibilityLabel={t('colors.defaultColor')}
         onPress={() => onChange(null)}
         style={[styles.defaultColor, color === null && styles.selected]}
       >
-        <Text style={styles.defaultText}>Predefinito</Text>
+        <Text style={styles.defaultText}>{t('colors.default')}</Text>
       </Pressable>
     </View>
   );
@@ -50,3 +52,6 @@ const styles = StyleSheet.create({
   },
   defaultText: { color: '#374151', fontSize: 11, fontWeight: '600' },
 });
+
+
+

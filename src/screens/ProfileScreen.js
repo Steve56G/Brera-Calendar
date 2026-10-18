@@ -12,6 +12,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from '../i18n/LanguageProvider';
 
 const EMPTY_PROFILE = {
   firstName: '',
@@ -22,26 +23,28 @@ const EMPTY_PROFILE = {
 };
 
 const FIELDS = [
-  { key: 'firstName', label: 'Nome' },
-  { key: 'lastName', label: 'Cognome' },
-  { key: 'institutionalEmail', label: 'Email istituzionale', keyboardType: 'email-address', autoCapitalize: 'none' },
-  { key: 'studentId', label: 'Matricola' },
-  { key: 'degreeCourse', label: 'Corso di laurea' },
+  { key: 'firstName' },
+  { key: 'lastName' },
+  { key: 'institutionalEmail', keyboardType: 'email-address', autoCapitalize: 'none' },
+  { key: 'studentId' },
+  { key: 'degreeCourse' },
 ];
 
 function Header({ onBack }) {
+  const { t } = useTranslation();
   return (
     <View style={styles.header}>
-      <Pressable onPress={onBack} hitSlop={12} style={styles.backBtn} accessibilityRole="button" accessibilityLabel="Indietro">
-        <Text style={styles.backText}>‹ Indietro</Text>
+      <Pressable onPress={onBack} hitSlop={12} style={styles.backBtn} accessibilityRole="button" accessibilityLabel={t('common.back')}>
+        <Text style={styles.backText}>‹ {t('common.back')}</Text>
       </Pressable>
-      <Text style={styles.headerTitle}>Profilo</Text>
+      <Text style={styles.headerTitle}>{t('header.profile')}</Text>
       <View style={styles.backBtn} />
     </View>
   );
 }
 
 export default function ProfileScreen({ visible, profile, onClose, onSave }) {
+  const { t } = useTranslation();
   const [form, setForm] = useState(() => ({ ...EMPTY_PROFILE, ...(profile || {}) }));
 
   const save = () => {
@@ -60,7 +63,9 @@ export default function ProfileScreen({ visible, profile, onClose, onSave }) {
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
             >
-              {FIELDS.map(({ key, label, keyboardType, autoCapitalize }) => (
+              {FIELDS.map(({ key, keyboardType, autoCapitalize }) => {
+                const label = t(`profile.${key}`);
+                return (
                 <View key={key} style={styles.field}>
                   <Text style={styles.label}>{label}</Text>
                   <TextInput
@@ -75,9 +80,10 @@ export default function ProfileScreen({ visible, profile, onClose, onSave }) {
                     returnKeyType="next"
                   />
                 </View>
-              ))}
+                );
+              })}
               <Pressable style={({ pressed }) => [styles.saveBtn, pressed && { opacity: 0.85 }]} onPress={save}>
-                <Text style={styles.saveText}>Salva profilo</Text>
+                <Text style={styles.saveText}>{t('profile.save')}</Text>
               </Pressable>
             </ScrollView>
           </KeyboardAvoidingView>
@@ -112,3 +118,6 @@ const styles = StyleSheet.create({
   saveBtn: { backgroundColor: '#2563EB', borderRadius: 12, paddingVertical: 14, alignItems: 'center', marginBottom: 12 },
   saveText: { color: '#fff', fontSize: 16, fontWeight: '700' },
 });
+
+
+

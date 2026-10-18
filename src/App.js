@@ -23,6 +23,7 @@ import RoomAvailabilityScreen from './screens/RoomAvailabilityScreen';
 import { usePersistentState, setCodec, clearCalendarData } from './services/storage';
 import SettingsScreen from './screens/SettingsScreen';
 import ProfileScreen from './screens/ProfileScreen';
+import { LanguageProvider, useTranslation } from './i18n/LanguageProvider';
 import { mergeSchedules } from './services/updateMerge';
 
 // SDK 54+: la vecchia API (readAsStringAsync, copyAsync...) sta in 'expo-file-system/legacy'.
@@ -37,15 +38,15 @@ try {
 const TIMEOUT_MS = 90000;
 
 // Con un calendario già presente chiede come importare il nuovo PDF
-const askImportMode = () =>
+const askImportMode = (t) =>
   new Promise((resolve) => {
     Alert.alert(
-      'Nuovo orario',
-      'Esiste già un calendario. Cosa vuoi fare?',
+      t('importMode.title'),
+      t('importMode.message'),
       [
-        { text: 'Annulla', style: 'cancel', onPress: () => resolve('cancel') },
-        { text: 'Pulisci calendario', style: 'destructive', onPress: () => resolve('replace') },
-        { text: 'Aggiorna calendario', onPress: () => resolve('update') },
+        { text: t('importMode.cancel'), style: 'cancel', onPress: () => resolve('cancel') },
+        { text: t('importMode.replace'), style: 'destructive', onPress: () => resolve('replace') },
+        { text: t('importMode.update'), onPress: () => resolve('update') },
       ],
       { cancelable: true, onDismiss: () => resolve('cancel') }
     );
@@ -93,6 +94,7 @@ async function readPdfBase64(asset) {
 /* ------------------------------ App ------------------------------ */
 
 function AppContent() {
+  const { t, change } = useTranslation();
   const [status, setStatus] = useState('idle'); // idle | loading | ready | error
   const [fileName, setFileName, nameLoaded] = usePersistentState('fileName', '');
   const [progress, setProgress] = useState('');
@@ -186,32 +188,32 @@ function AppContent() {
 
       let mode = 'replace';
       if (schedule.length > 0) {
-        mode = await askImportMode();
+        mode = await askImportMode(t);
         if (mode === 'cancel') return;
       }
       importModeRef.current = mode;
 
       setStatus('loading');
       setErrorMsg('');
-      setProgress('Copia del file…');
+      setProgress(t('import.copying'));
       setFileName(asset.name || 'orario.pdf');
 
       const b64 = await readPdfBase64(asset);
 
       pagesRef.current = [];
       startedRef.current = false;
-      setProgress('Lettura del PDF…');
+      setProgress(t('import.reading'));
       setPdfB64(b64); // monta la WebView nascosta
 
       clearTimeout(timerRef.current);
       timerRef.current = setTimeout(
-        () => fail('Timeout: pdf.js non ha risposto. Controlla la connessione internet e riprova.'),
+        () => fail(t('errors.timeout')),
         TIMEOUT_MS
       );
     } catch (e) {
-      fail(`Impossibile aprire il file: ${e?.message || e}`);
+      fail(t('errors.openFile', { message: e?.message || e }));
     }
-  }, [fail, setFileName, schedule]);
+  }, [fail, setFileName, schedule, t]);
 
   const onWebLoaded = useCallback(() => {
     if (startedRef.current || !pdfB64) return;
@@ -228,20 +230,20 @@ function AppContent() {
         return;
       }
       if (msg.type === 'start') {
-        setProgress(`Lettura pagina 0/${msg.pages}…`);
+        setProgress(t('import.readingPage', { current: 0, total: msg.pages }));
         pagesRef.current.total = msg.pages;
       } else if (msg.type === 'page') {
         pagesRef.current.push(msg.page);
-        setProgress(`Lettura pagina ${pagesRef.current.length}/${pagesRef.current.total || '?'}…`);
+        setProgress(t('import.readingPage', { current: pagesRef.current.length, total: pagesRef.current.total || '?' }));
       } else if (msg.type === 'done') {
         clearTimeout(timerRef.current);
-        setProgress('Analisi della griglia…');
+        setProgress(t('import.analyzing'));
         // piccolo rinvio per lasciar renderizzare l'indicatore
         setTimeout(() => {
           try {
             const { scheduleMatrix } = parseSchedule([...pagesRef.current]);
             if (importModeRef.current === 'update') {
-              if (!scheduleMatrix.length) throw new Error('nessuna riga riconosciuta nel PDF, calendario non modificato');
+              if (!scheduleMatrix.length) throw new Error(t('errors.noRowsUpdate'));
               const merged = mergeSchedules(schedule, scheduleMatrix, favorites, edits, courseColors);
               setSchedule(scheduleMatrix);
               setFavorites(merged.favorites);
@@ -249,7 +251,7 @@ function AppContent() {
               setCourseColors(merged.courseColors);
               setChanges(merged.changes);
               if (merged.missing) {
-                Alert.alert('Calendario aggiornato', `${merged.missing} corso/i preferito/i non presente/i nel nuovo PDF rimosso/i dai preferiti.`);
+                Alert.alert(t('import.updatedTitle'), t('import.missingFavorites', { count: merged.missing }));
               }
             } else {
               setSchedule(scheduleMatrix);
@@ -262,14 +264,14 @@ function AppContent() {
             setQuery('');
             setStatus('ready');
           } catch (err) {
-            fail(`Errore nel parsing: ${err?.message || err}`);
+            fail(t('errors.parsing', { message: err?.message || err }));
           }
         }, 50);
       } else if (msg.type === 'error') {
-        fail(msg.message || 'Errore sconosciuto durante la lettura del PDF.');
+        fail(msg.code ? t(`errors.${msg.code}`) : msg.message || t('errors.unknownRead'));
       }
     },
-    [fail, schedule, favorites, edits, courseColors, setCourseColors, setEdits, setFavorites, setSchedule, setChanges]
+    [fail, schedule, favorites, edits, courseColors, setCourseColors, setEdits, setFavorites, setSchedule, setChanges, t]
   );
 
   const filtered = useMemo(() => {
@@ -300,10 +302,10 @@ function AppContent() {
     (id) => {
       const list = changes[id];
       if (!list) return;
-      Alert.alert('Dati cambiati rispetto al PDF precedente', list.join('\n'), [
-        { text: 'Chiudi', style: 'cancel' },
+      Alert.alert(t('changes.title'), list.map(change).join('\n'), [
+        { text: t('common.close'), style: 'cancel' },
         {
-          text: 'Segna come verificato',
+          text: t('changes.markVerified'),
           onPress: () =>
             setChanges((prev) => {
               const next = { ...prev };
@@ -313,7 +315,7 @@ function AppContent() {
         },
       ]);
     },
-    [changes, setChanges]
+    [changes, setChanges, t, change]
   );
 
   const listExtra = useMemo(() => ({ favorites, changes }), [favorites, changes]);
@@ -339,15 +341,15 @@ function AppContent() {
       <StatusBar barStyle="dark-content" backgroundColor="#F3F4F6" />
 
       <View style={styles.header}>
-        <Text style={styles.title}>Orario</Text>
+        <Text style={styles.title}>{t('app.title')}</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
           {tab === 'list' && (
             <>
-              <Pressable onPress={() => setShowProfile(true)} hitSlop={10} accessibilityRole="button" accessibilityLabel="Apri profilo studente">
-                <Text style={styles.headerLink}>Profilo</Text>
+              <Pressable onPress={() => setShowProfile(true)} hitSlop={10} accessibilityRole="button" accessibilityLabel={t('header.openProfile')}>
+                <Text style={styles.headerLink}>{t('header.profile')}</Text>
               </Pressable>
-              <Pressable onPress={() => setShowSettings(true)} hitSlop={10} accessibilityRole="button" accessibilityLabel="Apri impostazioni">
-                <Text style={styles.headerLink}>Impostazioni</Text>
+              <Pressable onPress={() => setShowSettings(true)} hitSlop={10} accessibilityRole="button" accessibilityLabel={t('header.openSettings')}>
+                <Text style={styles.headerLink}>{t('header.settings')}</Text>
               </Pressable>
             </>
           )}
@@ -361,12 +363,12 @@ function AppContent() {
         onPress={pickPdf}
         disabled={visibleStatus === 'loading'}
       >
-        <Text style={styles.primaryBtnText}>{visibleStatus === 'ready' ? 'Carica un altro PDF' : 'Seleziona PDF dell’orario'}</Text>
+        <Text style={styles.primaryBtnText}>{visibleStatus === 'ready' ? t('import.loadAnother') : t('import.select')}</Text>
       </Pressable>
 
       {visibleStatus === 'idle' && (
         <View style={styles.center}>
-          <Text style={styles.hint}>Importa il PDF dell’orario per cercare materie e docenti.</Text>
+          <Text style={styles.hint}>{t('list.idleHint')}</Text>
         </View>
       )}
 
@@ -380,7 +382,7 @@ function AppContent() {
 
       {visibleStatus === 'error' && (
         <View style={styles.center}>
-          <Text style={styles.errorTitle}>Qualcosa è andato storto</Text>
+          <Text style={styles.errorTitle}>{t('list.errorTitle')}</Text>
           <Text style={styles.hint}>{errorMsg}</Text>
         </View>
       )}
@@ -389,7 +391,7 @@ function AppContent() {
         <>
           <TextInput
             style={styles.search}
-            placeholder="Cerca materia o professore…"
+            placeholder={t('list.searchPlaceholder')}
             placeholderTextColor="#9CA3AF"
             value={query}
             onChangeText={setQuery}
@@ -399,8 +401,8 @@ function AppContent() {
             returnKeyType="search"
           />
           <Text style={styles.count}>
-            {filtered.length} {filtered.length === 1 ? 'risultato' : 'risultati'}
-            {filtered.some((r) => r.isAmbiguous) ? `  ·  ⚠️ ${filtered.filter((r) => r.isAmbiguous).length} da verificare` : ''}
+            {t('list.results', { count: filtered.length })}
+            {filtered.some((r) => r.isAmbiguous) ? `  ·  ⚠️ ${t('list.toVerify', { count: filtered.filter((r) => r.isAmbiguous).length })}` : ''}
             {fileName ? `  ·  ${fileName}` : ''}
           </Text>
           <FlatList
@@ -416,11 +418,11 @@ function AppContent() {
             removeClippedSubviews={Platform.OS === 'android'}
             ListEmptyComponent={
               <View style={styles.empty}>
-                <Text style={styles.emptyTitle}>Nessun risultato</Text>
+                <Text style={styles.emptyTitle}>{t('list.noResults')}</Text>
                 <Text style={styles.hint}>
                   {schedule.length === 0
-                    ? 'Nel PDF non sono state riconosciute righe. Verifica che sia un orario valido e riprova.'
-                    : `Nessuna materia o docente corrisponde a “${query}”.`}
+                    ? t('list.noRowsRecognized')
+                    : t('list.noMatch', { query })}
                 </Text>
               </View>
             }
@@ -446,7 +448,7 @@ function AppContent() {
             domStorageEnabled
             onLoadEnd={onWebLoaded}
             onMessage={onWebMessage}
-            onError={() => fail('Errore di caricamento della WebView.')}
+            onError={() => fail(t('errors.webview'))}
           />
         </View>
       )}
@@ -469,7 +471,9 @@ function AppContent() {
 export default function App() {
   return (
     <SafeAreaProvider>
-      <AppContent />
+      <LanguageProvider>
+        <AppContent />
+      </LanguageProvider>
     </SafeAreaProvider>
   );
 }
@@ -496,5 +500,8 @@ const styles = StyleSheet.create({
   emptyTitle: { fontSize: 18, fontWeight: '700', color: '#374151' },
   hiddenWeb: { position: 'absolute', width: 1, height: 1, opacity: 0, left: -10, top: -10 },
 });
+
+
+
 
 

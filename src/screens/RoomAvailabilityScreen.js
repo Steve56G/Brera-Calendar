@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { FlatList, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import { DAYS, DAY_SHORT } from '../constants/schedule';
+import { DAYS } from '../constants/schedule';
+import { useTranslation } from '../i18n/LanguageProvider';
 import { norm } from '../utils/parser';
 import { buildRoomIndex, SLOT_HOURS } from '../services/roomAvailability';
 
@@ -13,11 +14,12 @@ const todayIndex = () => {
 /* ------------------------------ Ricerca aula ------------------------------ */
 
 function RoomSearch({ query, onQuery, rooms, selected, onSelect }) {
+  const { t, room: roomText } = useTranslation();
   return (
     <View>
       <TextInput
         style={styles.search}
-        placeholder="Cerca aula…"
+        placeholder={t('rooms.searchPlaceholder')}
         placeholderTextColor="#9CA3AF"
         value={query}
         onChangeText={onQuery}
@@ -27,7 +29,7 @@ function RoomSearch({ query, onQuery, rooms, selected, onSelect }) {
         returnKeyType="search"
       />
       <Text style={styles.count}>
-        {rooms.length} {rooms.length === 1 ? 'aula' : 'aule'}
+        {t('rooms.count', { count: rooms.length })}
       </Text>
       <FlatList
         horizontal
@@ -38,10 +40,10 @@ function RoomSearch({ query, onQuery, rooms, selected, onSelect }) {
         contentContainerStyle={{ gap: 8, paddingBottom: 4 }}
         renderItem={({ item }) => (
           <Pressable onPress={() => onSelect(item)} style={[styles.chip, item === selected && styles.chipOn]}>
-            <Text style={[styles.chipText, item === selected && styles.chipTextOn]}>{item}</Text>
+            <Text style={[styles.chipText, item === selected && styles.chipTextOn]}>{roomText(item)}</Text>
           </Pressable>
         )}
-        ListEmptyComponent={<Text style={styles.hint}>Nessuna aula corrisponde alla ricerca.</Text>}
+        ListEmptyComponent={<Text style={styles.hint}>{t('rooms.noMatch')}</Text>}
       />
     </View>
   );
@@ -50,6 +52,7 @@ function RoomSearch({ query, onQuery, rooms, selected, onSelect }) {
 /* ------------------------------ Selettore giorno ------------------------------ */
 
 function DaySelector({ day, onDay }) {
+  const { dayName, dayShort } = useTranslation();
   return (
     <View style={styles.dayRow}>
       {DAYS.map((d, i) => (
@@ -57,9 +60,9 @@ function DaySelector({ day, onDay }) {
           key={d}
           onPress={() => onDay(i)}
           style={[styles.dayPill, i === day && styles.dayPillOn]}
-          accessibilityLabel={d}
+          accessibilityLabel={dayName(i)}
         >
-          <Text style={[styles.dayPillText, i === day && styles.dayPillTextOn]}>{DAY_SHORT[i]}</Text>
+          <Text style={[styles.dayPillText, i === day && styles.dayPillTextOn]}>{dayShort(i)}</Text>
         </Pressable>
       ))}
     </View>
@@ -96,6 +99,7 @@ function HourGrid({ slots }) {
 /* ------------------------------ Schermata ------------------------------ */
 
 export default function RoomAvailabilityScreen({ schedule }) {
+  const { t, dayName, room: roomText } = useTranslation();
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState(null);
   const [day, setDay] = useState(todayIndex);
@@ -105,8 +109,8 @@ export default function RoomAvailabilityScreen({ schedule }) {
   const matches = useMemo(() => {
     const tokens = norm(query).split(' ').filter(Boolean);
     if (!tokens.length) return index.rooms;
-    return index.rooms.filter((r) => tokens.every((t) => norm(r).includes(t)));
-  }, [index, query]);
+    return index.rooms.filter((r) => tokens.every((tok) => norm(r).includes(tok) || norm(roomText(r)).includes(tok)));
+  }, [index, query, roomText]);
 
   const room = selected && index.byRoom[selected] ? selected : null;
 
@@ -120,7 +124,7 @@ export default function RoomAvailabilityScreen({ schedule }) {
     return (
       <View style={styles.center}>
         <Text style={styles.hint}>
-          {schedule.length ? 'Nessuna aula rilevata nei dati del PDF.' : 'Importa il PDF dell’orario per vedere la disponibilità delle aule.'}
+          {schedule.length ? t('rooms.noneDetected') : t('rooms.importHint')}
         </Text>
       </View>
     );
@@ -133,12 +137,12 @@ export default function RoomAvailabilityScreen({ schedule }) {
 
       {!room ? (
         <View style={styles.center}>
-          <Text style={styles.hint}>Seleziona un’aula per vedere le ore occupate.</Text>
+          <Text style={styles.hint}>{t('rooms.selectHint')}</Text>
         </View>
       ) : (
         <>
           <Text style={styles.summary}>
-            {room} · {DAYS[day]} · {busy} {busy === 1 ? 'ora occupata' : 'ore occupate'}, {slots.length - busy} libere
+            {roomText(room)} · {dayName(day)} · {t('rooms.busyHours', { count: busy })}, {t('rooms.freeHours', { count: slots.length - busy })}
           </Text>
           <HourGrid slots={slots} />
         </>
@@ -172,3 +176,6 @@ const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 },
   hint: { color: '#6B7280', fontSize: 14, textAlign: 'center' },
 });
+
+
+

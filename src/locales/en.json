@@ -1,0 +1,223 @@
+{
+  "app": {
+    "title": "Timetable"
+  },
+  "tabs": {
+    "list": "List",
+    "calendar": "Calendar",
+    "rooms": "Rooms"
+  },
+  "days": {
+    "long": {
+      "mon": "Monday",
+      "tue": "Tuesday",
+      "wed": "Wednesday",
+      "thu": "Thursday",
+      "fri": "Friday",
+      "sat": "Saturday"
+    },
+    "short": {
+      "mon": "Mon",
+      "tue": "Tue",
+      "wed": "Wed",
+      "thu": "Thu",
+      "fri": "Fri",
+      "sat": "Sat"
+    }
+  },
+  "common": {
+    "back": "Back",
+    "cancel": "Cancel",
+    "close": "Close",
+    "delete": "Delete",
+    "done": "Done"
+  },
+  "languages": {
+    "it": "Italian",
+    "en": "English"
+  },
+  "header": {
+    "profile": "Profile",
+    "settings": "Settings",
+    "openProfile": "Open student profile",
+    "openSettings": "Open settings"
+  },
+  "import": {
+    "select": "Select timetable PDF",
+    "loadAnother": "Load another PDF",
+    "copying": "Copying file…",
+    "reading": "Reading PDF…",
+    "readingPage": "Reading page %{current}/%{total}…",
+    "analyzing": "Analyzing grid…",
+    "updatedTitle": "Calendar updated",
+    "missingFavorites": {
+      "one": "%{count} favorite course not found in the new PDF was removed from favorites.",
+      "other": "%{count} favorite courses not found in the new PDF were removed from favorites."
+    }
+  },
+  "importMode": {
+    "title": "New timetable",
+    "message": "A calendar already exists. What do you want to do?",
+    "cancel": "Cancel",
+    "replace": "Clear calendar",
+    "update": "Update calendar"
+  },
+  "list": {
+    "idleHint": "Import the timetable PDF to search courses and professors.",
+    "errorTitle": "Something went wrong",
+    "searchPlaceholder": "Search course or professor…",
+    "results": {
+      "one": "%{count} result",
+      "other": "%{count} results"
+    },
+    "toVerify": "%{count} to verify",
+    "noResults": "No results",
+    "noRowsRecognized": "No rows were recognized in the PDF. Make sure it is a valid timetable and try again.",
+    "noMatch": "No course or professor matches “%{query}”."
+  },
+  "errors": {
+    "timeout": "Timeout: pdf.js did not respond. Check your internet connection and try again.",
+    "openFile": "Unable to open the file: %{message}",
+    "noRowsUpdate": "no rows recognized in the PDF, calendar not modified",
+    "parsing": "Parsing error: %{message}",
+    "unknownRead": "Unknown error while reading the PDF.",
+    "webview": "WebView loading error.",
+    "pdfjsNotLoaded": "pdf.js not loaded: an internet connection is required."
+  },
+  "changes": {
+    "title": "Data changed compared to the previous PDF",
+    "markVerified": "Mark as verified",
+    "professor": "Professor: %{from} → %{to}",
+    "time": "%{day}: %{from} → %{to}",
+    "room": "Room %{day}: %{from} → %{to}",
+    "noLesson": "no lesson"
+  },
+  "card": {
+    "addFavorite": "Add to favorites",
+    "removeFavorite": "Remove from favorites",
+    "warnTitle": "⚠️ Possible reading error - Check the original PDF",
+    "warnPage": "Page %{page} of the PDF",
+    "noProfessor": "Professor not specified",
+    "professorTbd": "Professor to be appointed (call)",
+    "noSchedule": "Schedule not detected in the PDF",
+    "lesson": "Lesson",
+    "officeHours": "Office hours"
+  },
+  "levels": {
+    "triennio": "Bachelor's (Triennio)",
+    "biennio": "Master's (Biennio)",
+    "restauro": "Conservation",
+    "affini": "Related activities",
+    "none": "Not specified"
+  },
+  "tags": {
+    "year": "Year %{n}",
+    "years": "Years %{a} & %{b}"
+  },
+  "data": {
+    "room": "Room"
+  },
+  "reasons": {
+    "uncertainBoundary": "uncertain lesson/office-hours boundary",
+    "overlappingCells": "overlapping cells with different colors",
+    "timeFromText": "time inferred from text without a colored cell",
+    "overlappingSubBoxes": "overlapping sub-boxes",
+    "adjacentSubBoxes": "adjacent sub-boxes with different colors",
+    "misalignedBorders": "cell borders not aligned with the time grid",
+    "textOutsideGrid": "text outside the time grid",
+    "overlappingText": "overlapping text in cells",
+    "manyTextLines": "row with a lot of text: possible merge of several courses",
+    "rowsFromText": "rows estimated from text (row borders not found)",
+    "gridFromHeaders": "time grid estimated from the day headers",
+    "overlappingSlots": "overlapping time slots",
+    "lessonOfficeOverlap": "lesson and office hours overlap",
+    "ambiguousLevelColor": "level color (Triennio/Biennio/Restauro) is not unique"
+  },
+  "calendar": {
+    "favoriteCount": {
+      "one": "%{count} favorite course",
+      "other": "%{count} favorite courses"
+    },
+    "officeHours": "Office hours",
+    "officeHoursPrefix": "Office hours · ",
+    "addLesson": "+ Lesson",
+    "emptyHint": "No favorite courses. Tap the star ☆ on a course in the list: all its lessons will appear here.",
+    "tip": "Tap a box to edit it. Long-press to remove the course from favorites.",
+    "removeTitle": "Remove the course from favorites?",
+    "removeMessage": "Do you want to remove %{subject} from favorites? All its lessons will disappear from the calendar.",
+    "remove": "Remove"
+  },
+  "rooms": {
+    "searchPlaceholder": "Search room…",
+    "count": {
+      "one": "%{count} room",
+      "other": "%{count} rooms"
+    },
+    "noMatch": "No room matches your search.",
+    "noneDetected": "No rooms detected in the PDF data.",
+    "importHint": "Import the timetable PDF to see room availability.",
+    "selectHint": "Select a room to see its occupied hours.",
+    "busyHours": {
+      "one": "%{count} hour occupied",
+      "other": "%{count} hours occupied"
+    },
+    "freeHours": "%{count} free"
+  },
+  "lesson": {
+    "heading": "Edit lesson",
+    "cancelClose": "Cancel and close",
+    "day": "Day",
+    "title": "Title",
+    "titlePlaceholder": "Lesson title",
+    "professor": "Professor",
+    "professorPlaceholder": "Professor's name",
+    "room": "Room",
+    "roomPlaceholder": "E.g. Room 6",
+    "notes": "Notes",
+    "notePlaceholder": "Add a note",
+    "editNotes": "Tap to edit notes",
+    "colorLesson": "Lesson color",
+    "colorCourse": "Course color (all lessons)",
+    "start": "Start",
+    "end": "End",
+    "minus30": "%{label} -30 minutes",
+    "plus30": "%{label} +30 minutes",
+    "save": "Save changes",
+    "errTitle": "Enter a title.",
+    "errTimeFormat": "Invalid time: use the HH:MM format with minutes 00 or 30.",
+    "errTimeRange": "The time must be between %{min} and %{max}.",
+    "errTimeOrder": "The end time must be later than the start time.",
+    "deleteTitle": "Delete the lesson?",
+    "deleteMessage": "Only this lesson will be removed. The course's other lessons will stay in the calendar."
+  },
+  "colors": {
+    "default": "Default",
+    "defaultColor": "Default color",
+    "color": "Color %{color}",
+    "lightColor": "Light color %{color}",
+    "lightColors": "Light colors",
+    "showMore": "Show more colors",
+    "hideMore": "Hide more colors"
+  },
+  "profile": {
+    "firstName": "First name",
+    "lastName": "Last name",
+    "institutionalEmail": "Institutional email",
+    "studentId": "Student ID",
+    "degreeCourse": "Degree program",
+    "save": "Save profile"
+  },
+  "settings": {
+    "general": "General",
+    "about": "About",
+    "clearCalendar": "Clear calendar",
+    "clearNote": "Deletes the imported timetable, favorite courses and course edits saved on this device.",
+    "clearTitle": "Clear the calendar?",
+    "clearMessage": "The imported timetable, favorite courses and all lesson edits will be deleted. This action cannot be undone.",
+    "clearConfirm": "Clear",
+    "clearDone": "The calendar data has been deleted.",
+    "language": "Language",
+    "version": "Version %{version}",
+    "supportNote": "The app is completely free and open source, but if you'd like to give me more than a pat on the back, you can buy me something at this link!"
+  }
+}

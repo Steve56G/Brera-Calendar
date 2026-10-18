@@ -111,7 +111,7 @@ async function extractRects(page, vp) {
 
 window.runExtraction = async function (b64) {
   try {
-    if (!window.pdfjsLib) { send({ type: 'error', message: 'pdf.js non caricato: serve una connessione internet.' }); return; }
+    if (!window.pdfjsLib) { send({ type: 'error', code: 'pdfjsNotLoaded', message: 'pdf.js non caricato: serve una connessione internet.' }); return; }
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${PDFJS_VERSION}/pdf.worker.min.js';
     var bin = atob(b64);
     var bytes = new Uint8Array(bin.length);
@@ -146,3 +146,6 @@ window.runExtraction = async function (b64) {
   }
 };
 </script></body></html>`;
+
+
+
