@@ -86,8 +86,13 @@ export function mergeSchedules(oldSchedule, newSchedule, favorites, edits, cours
       });
     });
 
+  // Le lezioni create a mano (Calendario → + Lezione) non dipendono dal PDF: restano invariate,
+  // insieme al loro colore.
+  Object.entries(edits).forEach(([key, patch]) => {
+    if (!patch?.created || patch.deleted) return;
+    nextEdits[key] = patch;
+    if (courseColors[patch.rowId]) nextColors[patch.rowId] = courseColors[patch.rowId];
+  });
+
   return { favorites: nextFav, edits: nextEdits, courseColors: nextColors, changes, missing };
 }
-
-
-
