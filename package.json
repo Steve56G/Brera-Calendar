@@ -1,6 +1,6 @@
 {
   "name": "orario-app",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "main": "index.js",
   "dependencies": {
     "@expo/ui": "~57.0.25",
