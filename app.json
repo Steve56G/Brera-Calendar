@@ -37,6 +37,10 @@
         "android.permission.READ_EXTERNAL_STORAGE",
         "android.permission.WRITE_EXTERNAL_STORAGE",
         "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.VIBRATE",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.SYSTEM_ALERT_WINDOW",
         "android.permission.VIBRATE"
       ]
     },
@@ -48,6 +52,12 @@
         "projectId": "4009e335-db79-4025-b76a-d64def4fb972"
       }
     },
-    "owner": "melondogenjoyer"
+    "owner": "melondogenjoyer",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/4009e335-db79-4025-b76a-d64def4fb972"
+    }
   }
 }
