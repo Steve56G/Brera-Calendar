@@ -10,7 +10,7 @@
 // Le modifiche e i colori di un corso vengono eliminati quando il corso viene rimosso dai preferiti;
 // vengono inoltre azzerati quando si importa un nuovo PDF.
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const PREFIX = '@orario/';
@@ -22,6 +22,7 @@ const PREFIX = '@orario/';
 export function usePersistentState(key, initial, { encode = (v) => v, decode = (v) => v } = {}) {
   const [value, setValue] = useState(initial);
   const [loaded, setLoaded] = useState(false);
+  const restoreFailed = useRef(false);
 
   // ripristino all'avvio
   useEffect(() => {
@@ -30,7 +31,11 @@ export function usePersistentState(key, initial, { encode = (v) => v, decode = (
       .then((raw) => {
         if (alive && raw != null) setValue(decode(JSON.parse(raw)));
       })
-      .catch(() => {}) // dato assente o corrotto: si riparte dal valore iniziale
+      .catch(() => {
+        // lettura o conversione non riuscita: si parte dal valore iniziale, ma senza
+        // sovrascrivere subito i dati salvati (che potrebbero ancora essere recuperabili)
+        restoreFailed.current = true;
+      })
       .finally(() => {
         if (alive) setLoaded(true);
       });
@@ -43,6 +48,10 @@ export function usePersistentState(key, initial, { encode = (v) => v, decode = (
   // salvataggio a ogni modifica (solo dopo il ripristino, per non sovrascrivere i dati salvati)
   useEffect(() => {
     if (!loaded) return;
+    if (restoreFailed.current) {
+      restoreFailed.current = false;
+      return;
+    }
     AsyncStorage.setItem(PREFIX + key, JSON.stringify(encode(value))).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value, loaded, key]);
@@ -55,6 +64,16 @@ const KEYS = ['schedule', 'fileName', 'favorites', 'edits', 'courseColors', 'cha
 export const clearCalendarData = () => AsyncStorage.multiRemove(KEYS.map((k) => PREFIX + k));
 
 // Codifica/decodifica per i Set
-export const setCodec = { encode: (s) => [...s], decode: (a) => new Set(a) };
+export const setCodec = { encode: (s) => [...s], decode: (a) => new Set(Array.isArray(a) ? a.map(String) : []) };
+
+// true se l'app era già stata usata su questo dispositivo (dati salvati da una versione precedente)
+const APP_DATA_KEYS = ['schedule', 'fileName', 'favorites', 'edits', 'courseColors', 'studentProfile'];
+export const hasStoredAppData = async () => {
+  const pairs = await AsyncStorage.multiGet(APP_DATA_KEYS.map((k) => PREFIX + k));
+  return pairs.some(([, value]) => value != null);
+};
+
+
+
 
 

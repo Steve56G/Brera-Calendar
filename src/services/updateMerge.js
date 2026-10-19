@@ -33,6 +33,40 @@ function diffRows(oldRow, newRow) {
   return out;
 }
 
+// Abbina le lezioni del vecchio PDF a quelle del nuovo (stesso corso): prima per giorno e posizione,
+// poi quelle spostate di giorno con lo stesso orario, infine l'unica rimasta per parte.
+// Restituisce { "giorno-tipoIndice" (vecchio) -> { d, i } (posizione nel nuovo PDF) }.
+function pairLessons(oldRow, newRow) {
+  const pairs = {};
+  const list = (row, kind) =>
+    row.days.flatMap((day) => lessonsOf(row, day.dayIndex, kind).map((s, i) => ({ d: day.dayIndex, i, s })));
+  ['l', 'r'].forEach((kind) => {
+    const O = list(oldRow, kind);
+    const N = list(newRow, kind);
+    const used = new Set();
+    const id = (x) => `${x.d}-${x.i}`;
+    const link = (o, n) => {
+      pairs[`${o.d}-${kind}${o.i}`] = { d: n.d, i: n.i };
+      used.add(id(n));
+    };
+    const rest = [];
+    O.forEach((o) => {
+      const n = N.find((x) => x.d === o.d && x.i === o.i);
+      if (n) link(o, n);
+      else rest.push(o);
+    });
+    const rest2 = [];
+    rest.forEach((o) => {
+      const n = N.find((x) => !used.has(id(x)) && x.s.start === o.s.start && x.s.end === o.s.end);
+      if (n) link(o, n);
+      else rest2.push(o);
+    });
+    const restN = N.filter((x) => !used.has(id(x)));
+    if (rest2.length === 1 && restN.length === 1) link(rest2[0], restN[0]);
+  });
+  return pairs;
+}
+
 /**
  * @returns {{ favorites:Set, edits:Object, courseColors:Object, changes:Object, missing:number }}
  *   changes: { [idNuovoCorso]: string[] }  -- differenze rispetto al PDF precedente
@@ -62,6 +96,7 @@ export function mergeSchedules(oldSchedule, newSchedule, favorites, edits, cours
       const diffs = diffRows(old, match);
       if (diffs.length) changes[match.id] = diffs;
 
+      const pairs = pairLessons(old, match);
       const prefix = `${old.id}-`;
       Object.entries(edits).forEach(([key, patch]) => {
         if (!key.startsWith(prefix)) return;
@@ -71,10 +106,14 @@ export function mergeSchedules(oldSchedule, newSchedule, favorites, edits, cours
         const kind = m[2];
         const i = Number(m[3]);
         const oldS = lessonsOf(old, d, kind)[i];
-        const newS = lessonsOf(match, d, kind)[i];
-        if (!newS) return; // la lezione non esiste più nel nuovo PDF
+        const target = pairs[`${d}-${kind}${i}`];
+        if (!target) return; // la lezione non esiste più nel nuovo PDF
+        const newS = lessonsOf(match, target.d, kind)[target.i];
         const p = { ...patch };
-        if (oldS && (oldS.start !== newS.start || oldS.end !== newS.end)) {
+        // Se nel nuovo PDF cambiano giorno o orario, il calendario si aggiorna per intero (giorno e ora),
+        // anche se l'utente aveva spostato la lezione; se non cambiano restano le sue modifiche.
+        if (oldS && (oldS.start !== newS.start || oldS.end !== newS.end || target.d !== d)) {
+          p.dayIndex = target.d;
           p.start = newS.start;
           p.end = newS.end;
           p.startLabel = newS.startLabel;
@@ -82,7 +121,7 @@ export function mergeSchedules(oldSchedule, newSchedule, favorites, edits, cours
         }
         if (oldS && (oldS.details || '') !== (newS.details || '')) p.details = newS.details;
         if (!sameProf(old.professor, match.professor)) p.professor = match.professor;
-        nextEdits[`${match.id}-${d}-${kind}${i}`] = p;
+        nextEdits[`${match.id}-${target.d}-${kind}${target.i}`] = p;
       });
     });
 

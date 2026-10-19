@@ -20,6 +20,7 @@ import ScheduleCard from './components/ScheduleCard';
 import TabBar from './navigation/TabBar';
 import CalendarScreen from './screens/CalendarScreen';
 import RoomAvailabilityScreen from './screens/RoomAvailabilityScreen';
+import { migrateChanges, migrateCourseColors, migrateEdits, migrateSchedule } from './services/migrations';
 import { usePersistentState, setCodec, clearCalendarData } from './services/storage';
 import SettingsScreen from './screens/SettingsScreen';
 import ProfileScreen from './screens/ProfileScreen';
@@ -100,7 +101,7 @@ function AppContent() {
   const [progress, setProgress] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [pdfB64, setPdfB64] = useState(null);
-  const [schedule, setSchedule, scheduleLoaded] = usePersistentState('schedule', []);
+  const [schedule, setSchedule, scheduleLoaded] = usePersistentState('schedule', [], { decode: migrateSchedule });
   const [query, setQuery] = useState('');
   const deferredQuery = useDeferredValue(query);
   const [tab, setTab] = useState('calendar'); // 'list' | 'calendar' | 'rooms' -- il Calendario è la schermata iniziale
@@ -114,9 +115,9 @@ function AppContent() {
     degreeCourse: '',
   });
   const [favorites, setFavorites, favLoaded] = usePersistentState('favorites', () => new Set(), setCodec);
-  const [edits, setEdits, editsLoaded] = usePersistentState('edits', {}); // modifiche manuali alle lezioni, per chiave evento
-  const [courseColors, setCourseColors, courseColorsLoaded] = usePersistentState('courseColors', {});
-  const [changes, setChanges, changesLoaded] = usePersistentState('changes', {}); // differenze trovate in "Aggiorna calendario"
+  const [edits, setEdits, editsLoaded] = usePersistentState('edits', {}, { decode: migrateEdits }); // modifiche manuali alle lezioni, per chiave evento
+  const [courseColors, setCourseColors, courseColorsLoaded] = usePersistentState('courseColors', {}, { decode: migrateCourseColors });
+  const [changes, setChanges, changesLoaded] = usePersistentState('changes', {}, { decode: migrateChanges }); // differenze trovate in "Aggiorna calendario"
   const loaded = nameLoaded && scheduleLoaded && favLoaded && editsLoaded && courseColorsLoaded && changesLoaded && profileLoaded;
 
   const visibleStatus = status === 'idle' && loaded && schedule.length > 0 ? 'ready' : status;

@@ -139,25 +139,21 @@ export default function LessonEditModal({ visible, lesson, color, isCustom = fal
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator
           >
-            {isCustom && (
-              <>
-                <Text style={styles.label}>{t('lesson.day')}</Text>
-                <View style={styles.daysRow}>
-                  {DAYS.map((day, index) => (
-                    <Pressable
-                      key={day}
-                      accessibilityRole="radio"
-                      accessibilityState={{ checked: dayIndex === index }}
-                      accessibilityLabel={dayName(index)}
-                      onPress={() => setDayIndex(index)}
-                      style={[styles.dayButton, dayIndex === index && styles.dayButtonSelected]}
-                    >
-                      <Text style={[styles.dayButtonText, dayIndex === index && styles.dayButtonTextSelected]}>{dayShort(index)}</Text>
-                    </Pressable>
-                  ))}
-                </View>
-              </>
-            )}
+            <Text style={styles.label}>{t('lesson.day')}</Text>
+            <View style={styles.daysRow}>
+              {DAYS.map((day, index) => (
+                <Pressable
+                  key={day}
+                  accessibilityRole="radio"
+                  accessibilityState={{ checked: dayIndex === index }}
+                  accessibilityLabel={dayName(index)}
+                  onPress={() => setDayIndex(index)}
+                  style={[styles.dayButton, dayIndex === index && styles.dayButtonSelected]}
+                >
+                  <Text style={[styles.dayButtonText, dayIndex === index && styles.dayButtonTextSelected]}>{dayShort(index)}</Text>
+                </Pressable>
+              ))}
+            </View>
 
             <Text style={styles.label}>{t('lesson.title')}</Text>
             <TextInput

@@ -1,8 +1,8 @@
-import { createContext, useCallback, useContext, useMemo } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { DAY_KEYS } from '../constants/schedule';
-import { usePersistentState } from '../services/storage';
+import { hasStoredAppData, usePersistentState } from '../services/storage';
 import { changeLabel, levelLabel, professorLabel, reasonLabel, roomText, tagLabel } from './dataLabels';
-import { detectLanguage, i18n, SUPPORTED_LANGUAGES } from './index';
+import { DEFAULT_LANGUAGE, detectLanguage, i18n, SUPPORTED_LANGUAGES } from './index';
 
 const LanguageContext = createContext(null);
 
@@ -10,7 +10,25 @@ const LanguageContext = createContext(null);
 // (chiave "@orario/language"); finché non ne esiste una si usa la lingua del dispositivo.
 export function LanguageProvider({ children }) {
   const [stored, setStored, loaded] = usePersistentState('language', null);
-  const language = SUPPORTED_LANGUAGES.includes(stored) ? stored : detectLanguage();
+  // null = verifica in corso. Chi aggiorna da una versione precedente (solo italiano) ha già dei dati
+  // salvati e resta in italiano; chi installa l'app per la prima volta parte dalla lingua del telefono.
+  const [hadData, setHadData] = useState(null);
+  useEffect(() => {
+    let alive = true;
+    hasStoredAppData()
+      .then((value) => alive && setHadData(value))
+      .catch(() => alive && setHadData(false));
+    return () => {
+      alive = false;
+    };
+  }, []);
+  const ready = loaded && hadData !== null;
+  const language = SUPPORTED_LANGUAGES.includes(stored) ? stored : hadData ? DEFAULT_LANGUAGE : detectLanguage();
+
+  // la scelta iniziale viene salvata, così non cambia più ai riavvii successivi
+  useEffect(() => {
+    if (ready && stored == null) setStored(language);
+  }, [ready, stored, language, setStored]);
 
   const setLanguage = useCallback(
     (code) => {
@@ -20,7 +38,7 @@ export function LanguageProvider({ children }) {
   );
 
   const value = useMemo(() => {
-    const t = (key, options = {}) => i18n.t(key, { locale: language, ...options });
+    const t = (key, options) => i18n.t(key, { locale: language, ...options });
     const dayName = (index) => t(`days.long.${DAY_KEYS[index]}`);
     return {
       t,
@@ -37,7 +55,7 @@ export function LanguageProvider({ children }) {
     };
   }, [language, setLanguage]);
 
-  if (!loaded) return null;
+  if (!ready) return null;
   return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;
 }
 

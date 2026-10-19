@@ -24,22 +24,22 @@ export default function CalendarView({ schedule, favorites, onToggle, edits = {}
 
   // eventi per giorno, già posizionati (col / cols)
   const perDay = useMemo(() => {
-    const days = DAYS.map(() => []);
+    const events = [];
     favRows.forEach((r) => {
       r.days.forEach((d) => {
         d.lessons.forEach((s, i) =>
-          days[d.dayIndex].push({ key: `${r.id}-${d.dayIndex}-l${i}`, rowId: r.id, subject: r.subject, professor: r.professor, level: r.level, kind: 'lezione', ...pick(s) })
+          events.push({ key: `${r.id}-${d.dayIndex}-l${i}`, rowId: r.id, dayIndex: d.dayIndex, subject: r.subject, professor: r.professor, level: r.level, kind: 'lezione', ...pick(s) })
         );
         if (showRi) {
           d.ricevimenti.forEach((s, i) =>
-            days[d.dayIndex].push({ key: `${r.id}-${d.dayIndex}-r${i}`, rowId: r.id, subject: r.subject, professor: r.professor, level: r.level, kind: 'ricevimento', ...pick(s) })
+            events.push({ key: `${r.id}-${d.dayIndex}-r${i}`, rowId: r.id, dayIndex: d.dayIndex, subject: r.subject, professor: r.professor, level: r.level, kind: 'ricevimento', ...pick(s) })
           );
         }
       });
     });
     Object.entries(edits).forEach(([key, edit]) => {
-      if (!edit.created || edit.deleted || !Number.isInteger(edit.dayIndex) || !days[edit.dayIndex]) return;
-      days[edit.dayIndex].push({
+      if (!edit.created || edit.deleted) return;
+      events.push({
         ...edit,
         key,
         kind: 'lezione',
@@ -47,18 +47,20 @@ export default function CalendarView({ schedule, favorites, onToggle, edits = {}
         color: courseColors[edit.rowId],
       });
     });
-    // applica le modifiche manuali (titolo/orario) prima di calcolare le sovrapposizioni
-    return days.map((evs) =>
-      layoutDay(
-        evs
-          .filter((e) => !edits[e.key]?.deleted)
-          .map((e) => ({
-            ...e,
-            ...(edits[e.key] || {}),
-            color: courseColors[e.rowId],
-          }))
-      )
-    );
+    // applica le modifiche manuali (titolo, giorno, orario) e poi raggruppa per giorno,
+    // così una lezione spostata di giorno finisce nella colonna giusta prima di calcolare le sovrapposizioni
+    const days = DAYS.map(() => []);
+    events
+      .filter((e) => !edits[e.key]?.deleted)
+      .map((e) => ({
+        ...e,
+        ...(edits[e.key] || {}),
+        color: courseColors[e.rowId],
+      }))
+      .forEach((e) => {
+        if (Number.isInteger(e.dayIndex) && days[e.dayIndex]) days[e.dayIndex].push(e);
+      });
+    return days.map(layoutDay);
   }, [favRows, showRi, edits, courseColors]);
 
   const availableDaysW = width - 32 - GUTTER;
@@ -217,7 +219,7 @@ export default function CalendarView({ schedule, favorites, onToggle, edits = {}
                 startLabel: u.startLabel,
                 endLabel: u.endLabel,
               }
-            : { subject: u.subject, professor: u.professor, details: u.details, note: u.note, start: u.start, end: u.end, startLabel: u.startLabel, endLabel: u.endLabel };
+            : { dayIndex: u.dayIndex, subject: u.subject, professor: u.professor, details: u.details, note: u.note, start: u.start, end: u.end, startLabel: u.startLabel, endLabel: u.endLabel };
           onEdit?.(u.key, savedLesson);
           onSetCourseColor?.(u.rowId, u.color);
           setEditing(null);
