@@ -115,6 +115,7 @@ function AppContent() {
     degreeCourse: '',
   });
   const [favorites, setFavorites, favLoaded] = usePersistentState('favorites', () => new Set(), setCodec);
+  const [sortFavorites, setSortFavorites] = useState(favorites);
   const [edits, setEdits, editsLoaded] = usePersistentState('edits', {}, { decode: migrateEdits }); // modifiche manuali alle lezioni, per chiave evento
   const [courseColors, setCourseColors, courseColorsLoaded] = usePersistentState('courseColors', {}, { decode: migrateCourseColors });
   const [changes, setChanges, changesLoaded] = usePersistentState('changes', {}, { decode: migrateChanges }); // differenze trovate in "Aggiorna calendario"
@@ -163,6 +164,16 @@ function AppContent() {
       });
     }
   }, [favorites, setFavorites, setEdits, setCourseColors, setChanges]);
+
+  const handleQueryChange = useCallback((nextQuery) => {
+    setSortFavorites(new Set(favorites));
+    setQuery(nextQuery);
+  }, [favorites]);
+
+  const handleTabChange = useCallback((nextTab) => {
+    setSortFavorites(new Set(favorites));
+    setTab(nextTab);
+  }, [favorites]);
 
   const webRef = useRef(null);
   const pagesRef = useRef([]);
@@ -248,6 +259,7 @@ function AppContent() {
               const merged = mergeSchedules(schedule, scheduleMatrix, favorites, edits, courseColors);
               setSchedule(scheduleMatrix);
               setFavorites(merged.favorites);
+              setSortFavorites(new Set(merged.favorites));
               setEdits(merged.edits);
               setCourseColors(merged.courseColors);
               setChanges(merged.changes);
@@ -257,6 +269,7 @@ function AppContent() {
             } else {
               setSchedule(scheduleMatrix);
               setFavorites(new Set());
+              setSortFavorites(new Set());
               setEdits({});
               setCourseColors({});
               setChanges({});
@@ -281,10 +294,10 @@ function AppContent() {
       ? schedule.filter((r) => tokens.every((t) => r.searchText.includes(t)))
       : schedule;
     return [
-      ...matches.filter((r) => favorites.has(r.id)),
-      ...matches.filter((r) => !favorites.has(r.id)),
+      ...matches.filter((r) => sortFavorites.has(r.id)),
+      ...matches.filter((r) => !sortFavorites.has(r.id)),
     ];
-  }, [schedule, deferredQuery, favorites]);
+  }, [schedule, deferredQuery, sortFavorites]);
 
   // elimina i dati locali del calendario e azzera lo stato in memoria
   const handleClearCalendar = useCallback(async () => {
@@ -395,7 +408,7 @@ function AppContent() {
             placeholder={t('list.searchPlaceholder')}
             placeholderTextColor="#9CA3AF"
             value={query}
-            onChangeText={setQuery}
+            onChangeText={handleQueryChange}
             autoCorrect={false}
             autoCapitalize="none"
             clearButtonMode="while-editing"
@@ -454,7 +467,7 @@ function AppContent() {
         </View>
       )}
 
-      <TabBar tab={tab} onTabChange={setTab} favoriteCount={favorites.size} />
+      <TabBar tab={tab} onTabChange={handleTabChange} favoriteCount={favorites.size} />
 
       <SettingsScreen key={`settings-${showSettings ? 'open' : 'closed'}`} visible={showSettings} onClose={() => setShowSettings(false)} onClearCalendar={handleClearCalendar} />
       <ProfileScreen
@@ -501,8 +514,6 @@ const styles = StyleSheet.create({
   emptyTitle: { fontSize: 18, fontWeight: '700', color: '#374151' },
   hiddenWeb: { position: 'absolute', width: 1, height: 1, opacity: 0, left: -10, top: -10 },
 });
-
-
 
 
 
