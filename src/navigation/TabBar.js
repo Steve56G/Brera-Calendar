@@ -1,5 +1,6 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTranslation } from '../i18n/LanguageProvider';
 
 export default function TabBar({ tab, onTabChange, favoriteCount }) {
@@ -11,7 +12,13 @@ export default function TabBar({ tab, onTabChange, favoriteCount }) {
       </Pressable>
       <Pressable style={[styles.tabBtn, tab === 'calendar' && styles.tabBtnOn]} onPress={() => onTabChange('calendar')}>
         <Text style={[styles.tabText, tab === 'calendar' && styles.tabTextOn]}>
-          {t('tabs.calendar')}{favoriteCount ? `  ★ ${favoriteCount}` : ''}
+          {t('tabs.calendar')}
+          {favoriteCount ? (
+            <>
+              {'  '}
+              <Ionicons name="star" size={13} color={tab === 'calendar' ? '#2563EB' : '#6B7280'} /> {favoriteCount}
+            </>
+          ) : null}
         </Text>
       </Pressable>
       <Pressable style={[styles.tabBtn, tab === 'rooms' && styles.tabBtnOn]} onPress={() => onTabChange('rooms')}>

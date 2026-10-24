@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Alert, Image, Linking, Modal, Platform, Pressable, StatusBar, StyleSheet, Text, View } from 'react-native';
 import Constants from 'expo-constants';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { SUPPORTED_LANGUAGES } from '../i18n';
 import { useTranslation } from '../i18n/LanguageProvider';
@@ -12,7 +13,10 @@ function Header({ title, onBack }) {
   return (
     <View style={styles.header}>
       <Pressable onPress={onBack} hitSlop={12} style={styles.backBtn} accessibilityRole="button" accessibilityLabel={t('common.back')}>
-        <Text style={styles.backText}>‹ {t('common.back')}</Text>
+        <View style={styles.backContent}>
+          <Ionicons name="chevron-back" size={20} color="#2563EB" />
+          <Text style={styles.backText}>{t('common.back')}</Text>
+        </View>
       </Pressable>
       <Text style={styles.headerTitle}>{title}</Text>
       <View style={styles.backBtn} />
@@ -38,7 +42,7 @@ function LanguageSelector() {
           <Text style={styles.languageLabel}>{t('settings.language')}</Text>
           <Text style={styles.rowText}>{t(`languages.${language}`)}</Text>
         </View>
-        <Text style={styles.chevron}>{open ? '▴' : '▾'}</Text>
+        <Ionicons name={open ? 'chevron-up' : 'chevron-down'} size={20} color="#9CA3AF" />
       </Pressable>
       {open && (
         <View style={styles.options}>
@@ -54,7 +58,7 @@ function LanguageSelector() {
               accessibilityState={{ checked: code === language }}
             >
               <Text style={[styles.optionText, code === language && styles.optionTextOn]}>{t(`languages.${code}`)}</Text>
-              {code === language && <Text style={styles.check}>✓</Text>}
+              {code === language && <Ionicons name="checkmark" size={20} color="#2563EB" />}
             </Pressable>
           ))}
         </View>
@@ -102,11 +106,11 @@ export default function SettingsScreen({ visible, onClose, onClearCalendar }) {
               <View style={styles.list}>
                 <Pressable style={({ pressed }) => [styles.row, pressed && { opacity: 0.8 }]} onPress={() => setPage('general')}>
                   <Text style={styles.rowText}>{t('settings.general')}</Text>
-                  <Text style={styles.chevron}>›</Text>
+                  <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
                 </Pressable>
                 <Pressable style={({ pressed }) => [styles.row, pressed && { opacity: 0.8 }]} onPress={() => setPage('about')}>
                   <Text style={styles.rowText}>{t('settings.about')}</Text>
-                  <Text style={styles.chevron}>›</Text>
+                  <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
                 </Pressable>
               </View>
             </>
@@ -157,10 +161,10 @@ const styles = StyleSheet.create({
   optionOn: { backgroundColor: '#DBEAFE' },
   optionText: { fontSize: 16, fontWeight: '600', color: '#111827' },
   optionTextOn: { color: '#1E3A8A' },
-  check: { color: '#2563EB', fontWeight: '800', fontSize: 16 },
   root: { flex: 1, backgroundColor: '#F3F4F6', paddingTop: TOP, paddingHorizontal: 16 },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 },
   backBtn: { width: 90 },
+  backContent: { flexDirection: 'row', alignItems: 'center' },
   backText: { color: '#2563EB', fontSize: 16, fontWeight: '600' },
   headerTitle: { fontSize: 18, fontWeight: '800', color: '#111827' },
   list: { gap: 10 },
@@ -169,7 +173,6 @@ const styles = StyleSheet.create({
     shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 2,
   },
   rowText: { fontSize: 16, fontWeight: '600', color: '#111827' },
-  chevron: { fontSize: 22, color: '#9CA3AF' },
   dangerBtn: { backgroundColor: '#DC2626', borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
   dangerText: { color: '#fff', fontSize: 16, fontWeight: '700' },
   note: { color: '#6B7280', fontSize: 13, textAlign: 'center', marginTop: 4 },

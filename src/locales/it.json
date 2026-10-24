@@ -103,7 +103,7 @@
   "card": {
     "addFavorite": "Aggiungi ai preferiti",
     "removeFavorite": "Rimuovi dai preferiti",
-    "warnTitle": "⚠️ Possibile errore di lettura - Verificare sul PDF originale",
+    "warnTitle": "Possibile errore di lettura - Verificare sul PDF originale",
     "warnPage": "Pagina %{page} del PDF",
     "noProfessor": "Docente non indicato",
     "professorTbd": "Docente da nominare (bando)",
@@ -149,7 +149,7 @@
     "officeHours": "Ricevimenti",
     "officeHoursPrefix": "Ricevimento · ",
     "addLesson": "+ Lezione",
-    "emptyHint": "Nessun corso nei preferiti. Tocca la stella ☆ su un corso nella lista: tutte le sue lezioni compariranno qui.",
+    "emptyHint": "Nessun corso nei preferiti. Tocca la stella su un corso nella lista: tutte le sue lezioni compariranno qui.",
     "tip": "Tocca un box per modificarlo. Tieni premuto per rimuovere il corso dai preferiti.",
     "removeTitle": "Rimuovere il corso dai preferiti?",
     "removeMessage": "Vuoi rimuovere %{subject} dai preferiti? Tutte le sue lezioni scompariranno dal calendario.",

@@ -11,6 +11,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from '../i18n/LanguageProvider';
 
@@ -35,7 +36,10 @@ function Header({ onBack }) {
   return (
     <View style={styles.header}>
       <Pressable onPress={onBack} hitSlop={12} style={styles.backBtn} accessibilityRole="button" accessibilityLabel={t('common.back')}>
-        <Text style={styles.backText}>‹ {t('common.back')}</Text>
+        <View style={styles.backContent}>
+          <Ionicons name="chevron-back" size={20} color="#2563EB" />
+          <Text style={styles.backText}>{t('common.back')}</Text>
+        </View>
       </Pressable>
       <Text style={styles.headerTitle}>{t('header.profile')}</Text>
       <View style={styles.backBtn} />
@@ -100,6 +104,7 @@ const styles = StyleSheet.create({
   content: { flex: 1, paddingTop: TOP, paddingHorizontal: 16 },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 },
   backBtn: { width: 90 },
+  backContent: { flexDirection: 'row', alignItems: 'center' },
   backText: { color: '#2563EB', fontSize: 16, fontWeight: '600' },
   headerTitle: { fontSize: 18, fontWeight: '800', color: '#111827' },
   form: { gap: 14, paddingBottom: 20 },

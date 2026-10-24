@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { WebView } from 'react-native-webview';
 import { extractorHtml } from './services/pdfExtractor';
 import { parseSchedule, norm } from './utils/parser';
@@ -413,7 +414,7 @@ function AppContent() {
           accessibilityRole="button"
           accessibilityLabel={t('import.pickFile')}
         >
-          <Text style={styles.fileBtnIcon}>📂</Text>
+          <Ionicons name="folder-open-outline" size={24} color="#1E3A8A" />
         </Pressable>
       </View>
 
@@ -453,7 +454,12 @@ function AppContent() {
           />
           <Text style={styles.count}>
             {t('list.results', { count: filtered.length })}
-            {filtered.some((r) => r.isAmbiguous) ? `  ·  ⚠️ ${t('list.toVerify', { count: filtered.filter((r) => r.isAmbiguous).length })}` : ''}
+            {filtered.some((r) => r.isAmbiguous) ? (
+              <>
+                {'  ·  '}
+                <Ionicons name="warning" size={12} color="#F59E0B" /> {t('list.toVerify', { count: filtered.filter((r) => r.isAmbiguous).length })}
+              </>
+            ) : ''}
             {fileName ? `  ·  ${fileName}` : ''}
           </Text>
           <FlatList
@@ -541,7 +547,6 @@ const styles = StyleSheet.create({
   importRow: { flexDirection: 'row', gap: 10, marginBottom: 12 },
   importMain: { flex: 1, marginBottom: 0 },
   fileBtn: { width: 52, borderRadius: 12, backgroundColor: '#DBEAFE', alignItems: 'center', justifyContent: 'center' },
-  fileBtnIcon: { fontSize: 22 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24, gap: 10 },
   hint: { color: '#6B7280', fontSize: 15, textAlign: 'center' },
   fileName: { color: '#9CA3AF', fontSize: 12 },

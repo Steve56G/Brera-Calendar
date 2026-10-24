@@ -1,5 +1,6 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { LEVEL_HEX } from '../constants/schedule';
 import { useTranslation } from '../i18n/LanguageProvider';
 
@@ -19,7 +20,7 @@ const ScheduleCard = React.memo(function ScheduleCard({ item, isFav, onToggle, c
           accessibilityRole="button"
           accessibilityLabel={isFav ? t('card.removeFavorite') : t('card.addFavorite')}
         >
-          <Text style={[styles.star, isFav && styles.starOn]}>{isFav ? '★' : '☆'}</Text>
+          <Ionicons name={isFav ? 'star' : 'star-outline'} size={28} color={isFav ? '#F59E0B' : '#9CA3AF'} />
         </Pressable>
       </View>
 
@@ -38,7 +39,10 @@ const ScheduleCard = React.memo(function ScheduleCard({ item, isFav, onToggle, c
 
       {item.isAmbiguous && (
         <View style={styles.warnBox}>
-          <Text style={styles.warnTitle}>{t('card.warnTitle')}</Text>
+          <View style={styles.warnHead}>
+            <Ionicons name="warning" size={16} color="#92400E" />
+            <Text style={styles.warnTitle}>{t('card.warnTitle')}</Text>
+          </View>
           <Text style={styles.warnPage}>{t('card.warnPage', { page: item.pageNo })}</Text>
           {item.ambiguityReasons.map((reason, index) => (
             <Text key={index} style={styles.warnReason}>• {reasonText(reason)}</Text>
@@ -89,7 +93,7 @@ const ScheduleCard = React.memo(function ScheduleCard({ item, isFav, onToggle, c
           accessibilityRole="button"
           accessibilityLabel={t('changes.title')}
         >
-          <Text style={styles.changedIcon}>⚠️</Text>
+          <Ionicons name="warning" size={24} color="#F59E0B" />
         </Pressable>
       )}
     </View>
@@ -102,10 +106,7 @@ const styles = StyleSheet.create({
     shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 2,
   },
   changedBtn: { alignSelf: 'flex-end', marginTop: 8 },
-  changedIcon: { fontSize: 22 },
   cardHead: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
-  star: { fontSize: 28, lineHeight: 30, color: '#9CA3AF' },
-  starOn: { color: '#F59E0B' },
   subject: { fontSize: 16, fontWeight: '700', color: '#111827' },
   badgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 },
   badge: { borderRadius: 999, paddingHorizontal: 10, paddingVertical: 3 },
@@ -120,7 +121,8 @@ const styles = StyleSheet.create({
   slotTime: { fontSize: 14, color: '#111827', fontWeight: '600' },
   kindText: { fontSize: 12, color: '#6B7280', fontWeight: '500' },
   warnBox: { marginTop: 10, backgroundColor: '#FEF3C7', borderColor: '#F59E0B', borderWidth: 1, borderRadius: 10, padding: 10 },
-  warnTitle: { color: '#92400E', fontWeight: '700', fontSize: 13 },
+  warnHead: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  warnTitle: { flex: 1, color: '#92400E', fontWeight: '700', fontSize: 13 },
   warnPage: { color: '#92400E', fontSize: 12, marginTop: 2 },
   warnReason: { color: '#92400E', fontSize: 12, marginTop: 2 },
   riTime: { fontSize: 13, color: '#B45309', fontWeight: '600' },
