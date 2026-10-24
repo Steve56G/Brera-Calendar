@@ -26,6 +26,7 @@ import SettingsScreen from './screens/SettingsScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import { LanguageProvider, useTranslation } from './i18n/LanguageProvider';
 import { mergeSchedules } from './services/updateMerge';
+import { downloadPdfBase64, fileNameFromUrl, findLatestTimetableUrl, timetableErrorMessage } from './services/breraTimetable';
 
 // SDK 54+: la vecchia API (readAsStringAsync, copyAsync...) sta in 'expo-file-system/legacy'.
 // Su SDK precedenti il fallback usa il modulo principale.
@@ -188,6 +189,25 @@ function AppContent() {
     setStatus('error');
   }, []);
 
+  // Avvia la lettura del PDF (base64) con la WebView nascosta; mode: 'replace' | 'update'
+  const beginImport = useCallback(
+    (b64, mode) => {
+      importModeRef.current = mode;
+      pagesRef.current = [];
+      startedRef.current = false;
+      setProgress(t('import.reading'));
+      setPdfB64(b64); // monta la WebView nascosta
+
+      clearTimeout(timerRef.current);
+      timerRef.current = setTimeout(
+        () => fail(t('errors.timeout')),
+        TIMEOUT_MS
+      );
+    },
+    [fail, t]
+  );
+
+  // Selezione manuale di un PDF dal dispositivo
   const pickPdf = useCallback(async () => {
     try {
       const res = await DocumentPicker.getDocumentAsync({
@@ -203,7 +223,6 @@ function AppContent() {
         mode = await askImportMode(t);
         if (mode === 'cancel') return;
       }
-      importModeRef.current = mode;
 
       setStatus('loading');
       setErrorMsg('');
@@ -211,21 +230,28 @@ function AppContent() {
       setFileName(asset.name || 'orario.pdf');
 
       const b64 = await readPdfBase64(asset);
-
-      pagesRef.current = [];
-      startedRef.current = false;
-      setProgress(t('import.reading'));
-      setPdfB64(b64); // monta la WebView nascosta
-
-      clearTimeout(timerRef.current);
-      timerRef.current = setTimeout(
-        () => fail(t('errors.timeout')),
-        TIMEOUT_MS
-      );
+      beginImport(b64, mode);
     } catch (e) {
       fail(t('errors.openFile', { message: e?.message || e }));
     }
-  }, [fail, setFileName, schedule, t]);
+  }, [fail, setFileName, schedule, t, beginImport]);
+
+  // Importazione automatica dell'ultimo orario dal sito di Brera: aggiorna sempre il calendario, senza dialoghi
+  const importLatest = useCallback(async () => {
+    setStatus('loading');
+    setErrorMsg('');
+    try {
+      setProgress(t('import.searchingLatest'));
+      const url = await findLatestTimetableUrl();
+      setProgress(t('import.downloading'));
+      const b64 = await downloadPdfBase64(url);
+      setFileName(fileNameFromUrl(url));
+      beginImport(b64, 'update');
+    } catch (e) {
+      setStatus('idle');
+      Alert.alert(t('errors.title'), timetableErrorMessage(t, e));
+    }
+  }, [beginImport, setFileName, t]);
 
   const onWebLoaded = useCallback(() => {
     if (startedRef.current || !pdfB64) return;
@@ -372,13 +398,24 @@ function AppContent() {
 
       {tab === 'list' && (
         <>
-      <Pressable
-        style={({ pressed }) => [styles.primaryBtn, pressed && { opacity: 0.85 }, visibleStatus === 'loading' && { opacity: 0.6 }]}
-        onPress={pickPdf}
-        disabled={visibleStatus === 'loading'}
-      >
-        <Text style={styles.primaryBtnText}>{visibleStatus === 'ready' ? t('import.loadAnother') : t('import.select')}</Text>
-      </Pressable>
+      <View style={styles.importRow}>
+        <Pressable
+          style={({ pressed }) => [styles.primaryBtn, styles.importMain, pressed && { opacity: 0.85 }, visibleStatus === 'loading' && { opacity: 0.6 }]}
+          onPress={importLatest}
+          disabled={visibleStatus === 'loading'}
+        >
+          <Text style={styles.primaryBtnText}>{t('import.latest')}</Text>
+        </Pressable>
+        <Pressable
+          style={({ pressed }) => [styles.fileBtn, pressed && { opacity: 0.85 }, visibleStatus === 'loading' && { opacity: 0.6 }]}
+          onPress={pickPdf}
+          disabled={visibleStatus === 'loading'}
+          accessibilityRole="button"
+          accessibilityLabel={t('import.pickFile')}
+        >
+          <Text style={styles.fileBtnIcon}>📂</Text>
+        </Pressable>
+      </View>
 
       {visibleStatus === 'idle' && (
         <View style={styles.center}>
@@ -501,6 +538,10 @@ const styles = StyleSheet.create({
   headerLink: { color: '#2563EB', fontWeight: '600' },
   primaryBtn: { backgroundColor: '#2563EB', borderRadius: 12, paddingVertical: 14, alignItems: 'center', marginBottom: 12 },
   primaryBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  importRow: { flexDirection: 'row', gap: 10, marginBottom: 12 },
+  importMain: { flex: 1, marginBottom: 0 },
+  fileBtn: { width: 52, borderRadius: 12, backgroundColor: '#DBEAFE', alignItems: 'center', justifyContent: 'center' },
+  fileBtnIcon: { fontSize: 22 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24, gap: 10 },
   hint: { color: '#6B7280', fontSize: 15, textAlign: 'center' },
   fileName: { color: '#9CA3AF', fontSize: 12 },
@@ -514,6 +555,3 @@ const styles = StyleSheet.create({
   emptyTitle: { fontSize: 18, fontWeight: '700', color: '#374151' },
   hiddenWeb: { position: 'absolute', width: 1, height: 1, opacity: 0, left: -10, top: -10 },
 });
-
-
-

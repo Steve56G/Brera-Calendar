@@ -43,8 +43,6 @@
     "openSettings": "Apri impostazioni"
   },
   "import": {
-    "select": "Seleziona PDF dell’orario",
-    "loadAnother": "Carica un altro PDF",
     "copying": "Copia del file…",
     "reading": "Lettura del PDF…",
     "readingPage": "Lettura pagina %{current}/%{total}…",
@@ -53,7 +51,11 @@
     "missingFavorites": {
       "one": "%{count} corso preferito non presente nel nuovo PDF è stato rimosso dai preferiti.",
       "other": "%{count} corsi preferiti non presenti nel nuovo PDF sono stati rimossi dai preferiti."
-    }
+    },
+    "latest": "Importa ultimo orario",
+    "pickFile": "Seleziona un PDF dal dispositivo",
+    "searchingLatest": "Ricerca dell’ultimo orario…",
+    "downloading": "Download del PDF…"
   },
   "importMode": {
     "title": "Nuovo orario",
@@ -82,7 +84,13 @@
     "parsing": "Errore nel parsing: %{message}",
     "unknownRead": "Errore sconosciuto durante la lettura del PDF.",
     "webview": "Errore di caricamento della WebView.",
-    "pdfjsNotLoaded": "pdf.js non caricato: serve una connessione internet."
+    "pdfjsNotLoaded": "pdf.js non caricato: serve una connessione internet.",
+    "title": "Errore",
+    "network": "Impossibile raggiungere il sito dell’Accademia. Controlla la connessione internet e riprova.",
+    "siteHttp": "Il sito dell’Accademia ha risposto con un errore (%{status}).",
+    "timetableNotFound": "Il PDF del %{semester} semestre non è stato trovato nella pagina degli orari. Riprova più tardi oppure selezionalo a mano dal dispositivo.",
+    "notPdf": "Il file scaricato non è un PDF valido.",
+    "downloadFailed": "Download del PDF non riuscito: %{message}"
   },
   "changes": {
     "title": "Dati cambiati rispetto al PDF precedente",
@@ -219,5 +227,9 @@
     "language": "Lingua",
     "version": "Versione %{version}",
     "supportNote": "L'app è completamente gratuita e open source, ma se vuoi darmi più di una pacca sulla spalla puoi offrirmi qualcosa su questo link!"
+  },
+  "semesters": {
+    "PRIMO": "primo",
+    "SECONDO": "secondo"
   }
 }

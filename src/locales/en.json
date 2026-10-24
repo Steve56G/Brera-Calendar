@@ -43,8 +43,6 @@
     "openSettings": "Open settings"
   },
   "import": {
-    "select": "Select timetable PDF",
-    "loadAnother": "Load another PDF",
     "copying": "Copying file…",
     "reading": "Reading PDF…",
     "readingPage": "Reading page %{current}/%{total}…",
@@ -53,7 +51,11 @@
     "missingFavorites": {
       "one": "%{count} favorite course not found in the new PDF was removed from favorites.",
       "other": "%{count} favorite courses not found in the new PDF were removed from favorites."
-    }
+    },
+    "latest": "Import latest timetable",
+    "pickFile": "Select a PDF from the device",
+    "searchingLatest": "Looking for the latest timetable…",
+    "downloading": "Downloading PDF…"
   },
   "importMode": {
     "title": "New timetable",
@@ -82,7 +84,13 @@
     "parsing": "Parsing error: %{message}",
     "unknownRead": "Unknown error while reading the PDF.",
     "webview": "WebView loading error.",
-    "pdfjsNotLoaded": "pdf.js not loaded: an internet connection is required."
+    "pdfjsNotLoaded": "pdf.js not loaded: an internet connection is required.",
+    "title": "Error",
+    "network": "Unable to reach the Academy website. Check your internet connection and try again.",
+    "siteHttp": "The Academy website returned an error (%{status}).",
+    "timetableNotFound": "The PDF for the %{semester} semester was not found on the timetable page. Try again later or select it manually from the device.",
+    "notPdf": "The downloaded file is not a valid PDF.",
+    "downloadFailed": "PDF download failed: %{message}"
   },
   "changes": {
     "title": "Data changed compared to the previous PDF",
@@ -219,5 +227,9 @@
     "language": "Language",
     "version": "Version %{version}",
     "supportNote": "The app is completely free and open source, but if you'd like to give me more than a pat on the back, you can buy me something at this link!"
+  },
+  "semesters": {
+    "PRIMO": "first",
+    "SECONDO": "second"
   }
 }
