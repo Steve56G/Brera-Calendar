@@ -2,7 +2,7 @@
   "expo": {
     "name": "Brera Calendar",
     "slug": "orario-app",
-    "version": "1.1.2",
+    "version": "1.2.1",
     "orientation": "portrait",
     "icon": "./src/assets/logo_brera.png",
     "userInterfaceStyle": "light",
@@ -17,7 +17,14 @@
       ],
       "expo-font",
       "expo-localization",
-      "expo-status-bar"
+      "expo-status-bar",
+      [
+        "expo-notifications",
+        {
+          "color": "#2563EB",
+          "defaultChannel": "default"
+        }
+      ]
     ],
     "ios": {
       "supportsTablet": true,
@@ -30,6 +37,7 @@
     "android": {
       "package": "com.steve56g.breracalendar",
       "versionCode": 1,
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "backgroundColor": "#E6E6E6",
         "foregroundImage": "./src/assets/logo_brera.png"
@@ -37,12 +45,7 @@
       "blockedPermissions": [
         "android.permission.READ_EXTERNAL_STORAGE",
         "android.permission.WRITE_EXTERNAL_STORAGE",
-        "android.permission.SYSTEM_ALERT_WINDOW",
-        "android.permission.VIBRATE",
-        "android.permission.READ_EXTERNAL_STORAGE",
-        "android.permission.WRITE_EXTERNAL_STORAGE",
-        "android.permission.SYSTEM_ALERT_WINDOW",
-        "android.permission.VIBRATE"
+        "android.permission.SYSTEM_ALERT_WINDOW"
       ]
     },
     "web": {
@@ -51,7 +54,9 @@
     "extra": {
       "eas": {
         "projectId": "4009e335-db79-4025-b76a-d64def4fb972"
-      }
+      },
+      "supabaseUrl": "https://ydztjjmlwdxbeskmpgpv.supabase.co",
+      "supabasePublishableKey": "sb_publishable_uU4L0joKZPNw4Os3Xnbaxw_am4kJhOG"
     },
     "owner": "melondogenjoyer",
     "runtimeVersion": {

@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { Alert, Image, Linking, Modal, Platform, Pressable, StatusBar, StyleSheet, Text, View } from 'react-native';
+import { Alert, Image, Linking, Modal, Platform, Pressable, StatusBar, StyleSheet, Switch, Text, View } from 'react-native';
 import Constants from 'expo-constants';
+import * as Device from 'expo-device';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { SUPPORTED_LANGUAGES } from '../i18n';
 import { useTranslation } from '../i18n/LanguageProvider';
+import { isExpoGoAndroid } from '../services/expoNotifications';
 
 const SUPPORT_URL = 'https://ko-fi.com/steven56';
 
@@ -72,10 +74,25 @@ function LanguageSelector() {
  *  - visible: boolean
  *  - onClose(): chiude le Impostazioni
  *  - onClearCalendar(): async, elimina i dati locali del calendario
+ *  - notificationPrefs: { enabled: boolean, onlyCurrentSemester: boolean }
+ *  - onChangeNotificationPrefs(patch): aggiorna le preferenze notifiche
+ *  - notificationError: string|null, ultimo errore di registrazione
+ *  - onRetryNotifications(): riprova la registrazione del device
  */
-export default function SettingsScreen({ visible, onClose, onClearCalendar }) {
+export default function SettingsScreen({
+  visible,
+  onClose,
+  onClearCalendar,
+  notificationPrefs,
+  onChangeNotificationPrefs,
+  notificationError,
+  onRetryNotifications,
+}) {
   const { t } = useTranslation();
-  const [page, setPage] = useState('menu'); // 'menu' | 'general' | 'about'
+  const [page, setPage] = useState('menu'); // 'menu' | 'general' | 'notifications' | 'about'
+
+  const notificationsAvailable = Platform.OS !== 'web' && !isExpoGoAndroid && Device.isDevice;
+  const prefs = notificationPrefs ?? { enabled: false, onlyCurrentSemester: false };
 
   const goBack = () => (page === 'menu' ? onClose() : setPage('menu'));
 
@@ -108,6 +125,10 @@ export default function SettingsScreen({ visible, onClose, onClearCalendar }) {
                   <Text style={styles.rowText}>{t('settings.general')}</Text>
                   <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
                 </Pressable>
+                <Pressable style={({ pressed }) => [styles.row, pressed && { opacity: 0.8 }]} onPress={() => setPage('notifications')}>
+                  <Text style={styles.rowText}>{t('settings.notifications')}</Text>
+                  <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+                </Pressable>
                 <Pressable style={({ pressed }) => [styles.row, pressed && { opacity: 0.8 }]} onPress={() => setPage('about')}>
                   <Text style={styles.rowText}>{t('settings.about')}</Text>
                   <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
@@ -125,6 +146,67 @@ export default function SettingsScreen({ visible, onClose, onClearCalendar }) {
                 </Pressable>
                 <Text style={styles.note}>{t('settings.clearNote')}</Text>
                 <LanguageSelector />
+              </View>
+            </>
+          )}
+
+          {page === 'notifications' && (
+            <>
+              <Header title={t('settings.notifications')} onBack={goBack} />
+              <View style={styles.list}>
+                <View style={[styles.row, styles.switchRow]}>
+                  <View style={styles.switchText}>
+                    <Text style={styles.rowText}>{t('settings.notificationsEnabled')}</Text>
+                    <Text style={styles.rowHint}>{t('settings.notificationsEnabledHint')}</Text>
+                  </View>
+                  <Switch
+                    value={prefs.enabled}
+                    onValueChange={(enabled) => onChangeNotificationPrefs({ enabled })}
+                    trackColor={{ false: '#D1D5DB', true: '#93C5FD' }}
+                    thumbColor={prefs.enabled ? '#2563EB' : '#F9FAFB'}
+                    ios_backgroundColor="#D1D5DB"
+                    accessibilityLabel={t('settings.notificationsEnabled')}
+                  />
+                </View>
+
+                <View style={[styles.row, styles.switchRow, !prefs.enabled && styles.switchRowDisabled]}>
+                  <View style={styles.switchText}>
+                    <Text style={styles.rowText}>{t('settings.notificationsOnlyCurrent')}</Text>
+                    <Text style={styles.rowHint}>{t('settings.notificationsOnlyCurrentHint')}</Text>
+                  </View>
+                  <Switch
+                    value={prefs.onlyCurrentSemester}
+                    onValueChange={(onlyCurrentSemester) =>
+                      onChangeNotificationPrefs({ onlyCurrentSemester })
+                    }
+                    disabled={!prefs.enabled}
+                    trackColor={{ false: '#D1D5DB', true: '#93C5FD' }}
+                    thumbColor={prefs.onlyCurrentSemester ? '#2563EB' : '#F9FAFB'}
+                    ios_backgroundColor="#D1D5DB"
+                    accessibilityLabel={t('settings.notificationsOnlyCurrent')}
+                  />
+                </View>
+
+                {!notificationsAvailable && (
+                  <Text style={styles.note}>{t('settings.notificationsUnavailable')}</Text>
+                )}
+
+                {!!notificationError && (
+                  <View style={styles.errorBox}>
+                    <Text style={styles.errorTitle}>{t('settings.notificationsError')}</Text>
+                    {__DEV__ && <Text style={styles.errorDetail}>{notificationError}</Text>}
+                    {/register_device|PGRST202|row-level security|42501/i.test(notificationError) && (
+                      <Text style={styles.errorDetail}>{t('settings.notificationsRlsHint')}</Text>
+                    )}
+                    <Pressable
+                      style={({ pressed }) => [styles.retryBtn, pressed && { opacity: 0.85 }]}
+                      onPress={onRetryNotifications}
+                      accessibilityRole="button"
+                    >
+                      <Text style={styles.retryText}>{t('settings.notificationsRetry')}</Text>
+                    </Pressable>
+                  </View>
+                )}
               </View>
             </>
           )}
@@ -173,9 +255,21 @@ const styles = StyleSheet.create({
     shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 2,
   },
   rowText: { fontSize: 16, fontWeight: '600', color: '#111827' },
+  switchRow: { gap: 12 },
+  switchText: { flex: 1 },
+  switchRowDisabled: { opacity: 0.5 },
+  rowHint: { color: '#6B7280', fontSize: 12, marginTop: 4 },
   dangerBtn: { backgroundColor: '#DC2626', borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
   dangerText: { color: '#fff', fontSize: 16, fontWeight: '700' },
   note: { color: '#6B7280', fontSize: 13, textAlign: 'center', marginTop: 4 },
+  errorBox: {
+    backgroundColor: '#FEF2F2', borderRadius: 12, padding: 14, gap: 8,
+    borderWidth: 1, borderColor: '#FECACA',
+  },
+  errorTitle: { color: '#B91C1C', fontSize: 14, fontWeight: '700' },
+  errorDetail: { color: '#7F1D1D', fontSize: 12 },
+  retryBtn: { alignSelf: 'flex-start', backgroundColor: '#DC2626', borderRadius: 10, paddingVertical: 8, paddingHorizontal: 14 },
+  retryText: { color: '#fff', fontSize: 14, fontWeight: '700' },
   aboutCenter: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10 },
   logo: { width: 96, height: 96, borderRadius: 22, marginBottom: 6 },
   appName: { fontSize: 24, fontWeight: '800', color: '#111827' },

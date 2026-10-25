@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "751621837394",
+    "project_id": "brera-calendar-fa244",
+    "storage_bucket": "brera-calendar-fa244.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:751621837394:android:17e7b6bd5850a8652dc58b",
+        "android_client_info": {
+          "package_name": "com.steve56g.breracalendar"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDa5AdzY7TPkSN5zFtVZEuH1bKV95Y-nBE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

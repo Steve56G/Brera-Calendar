@@ -1,4 +1,4 @@
-import React, { useCallback, useDeferredValue, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -28,6 +28,8 @@ import ProfileScreen from './screens/ProfileScreen';
 import { LanguageProvider, useTranslation } from './i18n/LanguageProvider';
 import { mergeSchedules } from './services/updateMerge';
 import { downloadPdfBase64, fileNameFromUrl, findLatestTimetableUrl, timetableErrorMessage } from './services/breraTimetable';
+import { registerDevice } from './services/notifications';
+import { useNotificationNavigation } from './hooks/useNotificationNavigation';
 
 // SDK 54+: la vecchia API (readAsStringAsync, copyAsync...) sta in 'expo-file-system/legacy'.
 // Su SDK precedenti il fallback usa il modulo principale.
@@ -97,7 +99,7 @@ async function readPdfBase64(asset) {
 /* ------------------------------ App ------------------------------ */
 
 function AppContent() {
-  const { t, change } = useTranslation();
+  const { t, change, language } = useTranslation();
   const [status, setStatus] = useState('idle'); // idle | loading | ready | error
   const [fileName, setFileName, nameLoaded] = usePersistentState('fileName', '');
   const [progress, setProgress] = useState('');
@@ -121,9 +123,72 @@ function AppContent() {
   const [edits, setEdits, editsLoaded] = usePersistentState('edits', {}, { decode: migrateEdits }); // modifiche manuali alle lezioni, per chiave evento
   const [courseColors, setCourseColors, courseColorsLoaded] = usePersistentState('courseColors', {}, { decode: migrateCourseColors });
   const [changes, setChanges, changesLoaded] = usePersistentState('changes', {}, { decode: migrateChanges }); // differenze trovate in "Aggiorna calendario"
-  const loaded = nameLoaded && scheduleLoaded && favLoaded && editsLoaded && courseColorsLoaded && changesLoaded && profileLoaded;
+  const [notificationPrefs, setNotificationPrefs, notificationPrefsLoaded] = usePersistentState('notificationPrefs', {
+    enabled: true,
+    onlyCurrentSemester: false,
+  });
+  const [notificationError, setNotificationError] = useState(null);
+  const [notificationRetry, setNotificationRetry] = useState(0);
+  const loaded = nameLoaded && scheduleLoaded && favLoaded && editsLoaded && courseColorsLoaded && changesLoaded && profileLoaded && notificationPrefsLoaded;
 
   const visibleStatus = status === 'idle' && loaded && schedule.length > 0 ? 'ready' : status;
+
+  // All'avvio e a ogni modifica delle preferenze (o della lingua) allinea il
+  // device su Supabase. La coda evita che due toggle ravvicinati si sovrascrivano.
+  const notificationsSyncKeyRef = useRef(null);
+  const notificationsSyncQueueRef = useRef(Promise.resolve());
+  const previousNotificationsEnabledRef = useRef(null);
+  useEffect(() => {
+    if (!loaded) return;
+
+    const key = `${notificationPrefs.enabled}-${notificationPrefs.onlyCurrentSemester}-${language}-${notificationRetry}`;
+    if (notificationsSyncKeyRef.current === key) return;
+    notificationsSyncKeyRef.current = key;
+
+    // Il prompt di sistema va mostrato all'avvio e quando l'utente riattiva
+    // le notifiche, non a ogni cambio di lingua o di "solo semestre corrente".
+    const requestPermissions =
+      notificationPrefs.enabled && previousNotificationsEnabledRef.current !== true;
+    previousNotificationsEnabledRef.current = notificationPrefs.enabled;
+
+    notificationsSyncQueueRef.current = notificationsSyncQueueRef.current
+      .then(async () => {
+        setNotificationError(null);
+        await registerDevice({
+          notificationsActive: notificationPrefs.enabled,
+          onlyCurrentSemester: notificationPrefs.onlyCurrentSemester,
+          language,
+          requestPermissions,
+          onError: setNotificationError,
+        });
+      })
+      .catch(() => {});
+  }, [loaded, language, notificationPrefs, notificationRetry]);
+
+  // Aggiorna le preferenze normalizzando la gerarchia:
+  // notifiche OFF => anche "solo semestre corrente" OFF.
+  const updateNotificationPrefs = useCallback((patch) => {
+    setNotificationPrefs((prev) => {
+      const enabled = patch.enabled ?? prev.enabled;
+      return {
+        enabled,
+        onlyCurrentSemester: enabled
+          ? (patch.onlyCurrentSemester ?? prev.onlyCurrentSemester)
+          : false,
+      };
+    });
+  }, [setNotificationPrefs]);
+
+  const retryNotifications = useCallback(() => setNotificationRetry((n) => n + 1), []);
+
+  // Tap sulla notifica: chiude eventuali modali e apre il tab richiesto.
+  const openFromNotification = useCallback((screen) => {
+    setShowSettings(false);
+    setShowProfile(false);
+    const target = screen === '/schedule-details' ? 'calendar' : screen;
+    if (target === 'calendar' || target === 'list' || target === 'rooms') setTab(target);
+  }, []);
+  useNotificationNavigation(openFromNotification);
 
   const editLesson = useCallback((key, patch) => setEdits((prev) => ({ ...prev, [key]: patch })), [setEdits]);
   const setCourseColor = useCallback((courseId, color) => {
@@ -512,7 +577,16 @@ function AppContent() {
 
       <TabBar tab={tab} onTabChange={handleTabChange} favoriteCount={favorites.size} />
 
-      <SettingsScreen key={`settings-${showSettings ? 'open' : 'closed'}`} visible={showSettings} onClose={() => setShowSettings(false)} onClearCalendar={handleClearCalendar} />
+      <SettingsScreen
+        key={`settings-${showSettings ? 'open' : 'closed'}`}
+        visible={showSettings}
+        onClose={() => setShowSettings(false)}
+        onClearCalendar={handleClearCalendar}
+        notificationPrefs={notificationPrefs}
+        onChangeNotificationPrefs={updateNotificationPrefs}
+        notificationError={notificationError}
+        onRetryNotifications={retryNotifications}
+      />
       <ProfileScreen
         key={`profile-${showProfile ? 'open' : 'closed'}`}
         visible={showProfile}
