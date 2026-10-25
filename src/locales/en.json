@@ -230,10 +230,8 @@
     "notificationsEnabledHint": "Get notified when a new timetable is published.",
     "notificationsOnlyCurrent": "Notify me only when the current semester's timetable changes",
     "notificationsOnlyCurrentHint": "Ignore updates for the other semester.",
-    "notificationsUnavailable": "Push notifications are not available in Expo Go on Android. This preference will be applied in the app build.",
     "notificationsError": "Could not register notifications for this device.",
     "notificationsRetry": "Try again",
-    "notificationsRlsHint": "Make sure the register_device function exists in Supabase (supabase/register_device.sql).",
     "version": "Version %{version}",
     "supportNote": "The app is completely free and open source, but if you'd like to give me more than a pat on the back, you can buy me something at this link!"
   },

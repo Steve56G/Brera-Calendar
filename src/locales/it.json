@@ -230,10 +230,8 @@
     "notificationsEnabledHint": "Ricevi un avviso quando viene pubblicato un nuovo orario.",
     "notificationsOnlyCurrent": "Notificami solo il cambiamento dell'orario del semestre corrente",
     "notificationsOnlyCurrentHint": "Ignora gli aggiornamenti dell'altro semestre.",
-    "notificationsUnavailable": "Le notifiche push non sono disponibili in Expo Go su Android. La preferenza verrà applicata nella build dell'app.",
     "notificationsError": "Impossibile registrare le notifiche su questo dispositivo.",
     "notificationsRetry": "Riprova",
-    "notificationsRlsHint": "Controlla che la funzione register_device esista in Supabase (supabase/register_device.sql).",
     "version": "Versione %{version}",
     "supportNote": "L'app è completamente gratuita e open source, ma se vuoi darmi più di una pacca sulla spalla puoi offrirmi qualcosa su questo link!"
   },

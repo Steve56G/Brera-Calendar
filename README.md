@@ -1,6 +1,7 @@
 # Orario
 
 App Expo/React Native per importare un orario universitario dell'accademia di Brera da PDF, consultare le lezioni in lista o calendario e gestire preferiti e modifiche personali.
+Si possono abilitare le notifiche per ricevere notifiche quando viene aggiornato l'orario universitario.
 
 ## Download
 
@@ -9,38 +10,6 @@ App Expo/React Native per importare un orario universitario dell'accademia di Br
 2. Apri il file dal telefono. Se richiesto, consenti l'installazione da questa fonte (Impostazioni → App → Accesso speciale → Installa app sconosciute),
    oppure clicca Altri dettagli → Installa Comunque
 3. Tocca **Installa** e poi **Apri**.
-
-## Requisiti
-
-- Node.js (versione LTS compatibile con Expo SDK 57)
-- npm
-- Expo Go per provare l'app, oppure un development build
-
-## Avvio in sviluppo
-
-```sh
-npm install
-npx expo start
-```
-
-Scansiona il QR code con Expo Go oppure avvia il progetto con `npx expo start --ios` o `npx expo start --android`.
-
-## Struttura del progetto
-
-```text
-src/
-  assets/       immagini usate dall'app e dalla configurazione Expo
-  components/   componenti riutilizzabili e modal
-  constants/    giorni e colori condivisi
-  navigation/   barra delle schede
-  screens/      viste Lista, Calendario, Aule, Profilo e Impostazioni
-  services/     persistenza, estrazione PDF e disponibilità aule
-  utils/        parsing PDF e layout del calendario
-  App.js        composizione dell'app e flussi di importazione
-index.js        registrazione Expo dell'app
-```
-
-Le schermate sono componenti React Native e la navigazione a schede resta gestita dall'app; gli import di `CourseColorSelector` risolvono automaticamente le varianti `.android.js` e `.ios.js`.
 
 ## Dati e privacy
 

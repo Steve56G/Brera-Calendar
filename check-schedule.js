@@ -69,7 +69,7 @@ function notificationForDevice(device, updates, currentSemester) {
     sound: 'default',
     ...content,
     data: {
-      screen: 'calendar',
+      screen: 'list',
       semester: primary.semester.toLowerCase(),
       url: primary.url,
       semesters: relevant.map((update) => update.semester.toLowerCase()),

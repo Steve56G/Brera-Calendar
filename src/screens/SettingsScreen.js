@@ -1,12 +1,10 @@
 import React, { useState } from 'react';
 import { Alert, Image, Linking, Modal, Platform, Pressable, StatusBar, StyleSheet, Switch, Text, View } from 'react-native';
 import Constants from 'expo-constants';
-import * as Device from 'expo-device';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { SUPPORTED_LANGUAGES } from '../i18n';
 import { useTranslation } from '../i18n/LanguageProvider';
-import { isExpoGoAndroid } from '../services/expoNotifications';
 
 const SUPPORT_URL = 'https://ko-fi.com/steven56';
 
@@ -91,7 +89,6 @@ export default function SettingsScreen({
   const { t } = useTranslation();
   const [page, setPage] = useState('menu'); // 'menu' | 'general' | 'notifications' | 'about'
 
-  const notificationsAvailable = Platform.OS !== 'web' && !isExpoGoAndroid && Device.isDevice;
   const prefs = notificationPrefs ?? { enabled: false, onlyCurrentSemester: false };
 
   const goBack = () => (page === 'menu' ? onClose() : setPage('menu'));
@@ -187,17 +184,10 @@ export default function SettingsScreen({
                   />
                 </View>
 
-                {!notificationsAvailable && (
-                  <Text style={styles.note}>{t('settings.notificationsUnavailable')}</Text>
-                )}
-
                 {!!notificationError && (
                   <View style={styles.errorBox}>
                     <Text style={styles.errorTitle}>{t('settings.notificationsError')}</Text>
-                    {__DEV__ && <Text style={styles.errorDetail}>{notificationError}</Text>}
-                    {/register_device|PGRST202|row-level security|42501/i.test(notificationError) && (
-                      <Text style={styles.errorDetail}>{t('settings.notificationsRlsHint')}</Text>
-                    )}
+                    <Text style={styles.errorDetail}>{notificationError}</Text>
                     <Pressable
                       style={({ pressed }) => [styles.retryBtn, pressed && { opacity: 0.85 }]}
                       onPress={onRetryNotifications}
