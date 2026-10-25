@@ -25,8 +25,8 @@ const SEMESTER_LABELS = {
 };
 
 const NOTIFICATION_BODY = {
-  it: 'È disponibile il nuovo PDF degli orari. Tocca per aprire il calendario.',
-  en: 'A new timetable PDF is available. Tap to open the calendar.',
+  it: 'È disponibile il nuovo PDF degli orari',
+  en: 'A new timetable PDF is available',
 };
 
 function notificationContent(semester, language) {
@@ -36,6 +36,45 @@ function notificationContent(semester, language) {
       ? `${SEMESTER_LABELS.en[semester]} timetable updated`
       : `Orario ${SEMESTER_LABELS.it[semester]} aggiornato`,
     body: NOTIFICATION_BODY[lang],
+  };
+}
+
+function combinedNotificationContent(language) {
+  const lang = language === 'en' ? 'en' : 'it';
+  return {
+    title: lang === 'en'
+      ? 'Semester 1 and 2 timetables updated'
+      : 'Orario 1° e 2° semestre aggiornati',
+    body: NOTIFICATION_BODY[lang],
+  };
+}
+
+function notificationForDevice(device, updates, currentSemester) {
+  if (!device.expo_push_token) return null;
+
+  const onlyCurrent = Boolean(device.only_current_semester);
+  const relevant = onlyCurrent
+    ? updates.filter((update) => update.semester === currentSemester)
+    : updates;
+
+  if (relevant.length === 0) return null;
+
+  const primary = relevant.find((update) => update.semester === currentSemester) ?? relevant[0];
+  const content = !onlyCurrent && updates.length === 2
+    ? combinedNotificationContent(device.language)
+    : notificationContent(primary.semester, device.language);
+
+  return {
+    to: device.expo_push_token,
+    sound: 'default',
+    ...content,
+    data: {
+      screen: 'calendar',
+      semester: primary.semester.toLowerCase(),
+      url: primary.url,
+      semesters: relevant.map((update) => update.semester.toLowerCase()),
+      language: device.language === 'en' ? 'en' : 'it',
+    },
   };
 }
 
@@ -128,7 +167,7 @@ async function saveSetting(key, value) {
   if (error) throw error;
 }
 
-async function sendNotifications(semester, url) {
+async function sendNotifications(updates) {
   // select('*') per non fallire se `language` non è ancora stata aggiunta:
   // in quel caso i device ricevono il testo italiano.
   const { data: devices, error } = await getSupabase()
@@ -137,31 +176,15 @@ async function sendNotifications(semester, url) {
     .eq('notifications_active', true);
   if (error) throw error;
 
-  const currentSemester = isCurrentSemester(semester);
-  const recipients = (devices ?? [])
-    .filter((device) => !device.only_current_semester || currentSemester)
-    .map((device) => ({
-      token: device.expo_push_token,
-      language: device.language === 'en' ? 'en' : 'it',
-    }))
-    .filter((recipient) => recipient.token);
+  const currentSemester = isCurrentSemester('PRIMO') ? 'PRIMO' : 'SECONDO';
+  const messages = (devices ?? [])
+    .map((device) => notificationForDevice(device, updates, currentSemester))
+    .filter(Boolean);
 
-  if (recipients.length === 0) {
-    console.log(`[${semester}] nessun device da notificare`);
+  if (messages.length === 0) {
+    console.log(`[${updates.map((update) => update.semester).join(',')}] nessun device da notificare`);
     return 0;
   }
-
-  const messages = recipients.map(({ token, language }) => ({
-    to: token,
-    sound: 'default',
-    ...notificationContent(semester, language),
-    data: {
-      screen: 'calendar',
-      semester: semester.toLowerCase(),
-      url,
-      language,
-    },
-  }));
 
   // L'API Expo accetta al massimo 100 messaggi per richiesta.
   for (let i = 0; i < messages.length; i += 100) {
@@ -182,19 +205,19 @@ async function sendNotifications(semester, url) {
     const payload = await response.json();
     const failed = (payload?.data ?? []).filter((ticket) => ticket.status === 'error');
     if (failed.length) {
-      console.warn(`[${semester}] ${failed.length} notifiche rifiutate da Expo:`, failed.slice(0, 3));
+      console.warn(`Notifiche rifiutate da Expo: ${failed.length}`, failed.slice(0, 3));
     }
   }
 
-  console.log(`[${semester}] notifiche inviate: ${recipients.length}`);
-  return recipients.length;
+  console.log(`Notifiche inviate: ${messages.length}`);
+  return messages.length;
 }
 
 async function checkSemester(html, semester) {
   const url = findTimetableUrl(html, semester);
   if (!url) {
     console.warn(`[${semester}] PDF non trovato nella pagina`);
-    return;
+    return null;
   }
 
   const key = SETTINGS_KEYS[semester];
@@ -202,33 +225,45 @@ async function checkSemester(html, semester) {
 
   if (previousUrl === url) {
     console.log(`[${semester}] nessun aggiornamento`);
-    return;
+    return null;
   }
 
   // Primo avvio: salva il valore iniziale senza notificare tutti i device.
   if (previousUrl === null) {
     await saveSetting(key, url);
     console.log(`[${semester}] baseline salvata, nessuna notifica`);
-    return;
+    return null;
   }
 
-  // Salva solo dopo un invio riuscito, così un errore push viene ritentato
-  // al giro successivo.
-  const sent = await sendNotifications(semester, url);
-  await saveSetting(key, url);
-  console.log(`[${semester}] nuovo PDF: ${url} (inviate ${sent})`);
+  // Non salva ancora: il salvataggio avviene solo dopo un invio riuscito.
+  return { semester, key, url };
 }
 
 async function runCheck() {
   const html = await fetchTimetableHtml();
   let failed = false;
+  const updates = [];
 
   for (const semester of Object.keys(SETTINGS_KEYS)) {
     try {
-      await checkSemester(html, semester);
+      const update = await checkSemester(html, semester);
+      if (update) updates.push(update);
     } catch (error) {
       failed = true;
       console.error(`[${semester}] errore:`, error?.message || error);
+    }
+  }
+
+  if (updates.length > 0) {
+    try {
+      const sent = await sendNotifications(updates);
+      for (const update of updates) {
+        await saveSetting(update.key, update.url);
+        console.log(`[${update.semester}] nuovo PDF: ${update.url} (inviate ${sent})`);
+      }
+    } catch (error) {
+      failed = true;
+      console.error('Invio notifiche fallito:', error?.message || error);
     }
   }
 
@@ -242,4 +277,11 @@ if (require.main === module) {
   });
 }
 
-module.exports = { findTimetableUrl, toAbsoluteUrl, isCurrentSemester, notificationContent };
+module.exports = {
+  findTimetableUrl,
+  toAbsoluteUrl,
+  isCurrentSemester,
+  notificationContent,
+  combinedNotificationContent,
+  notificationForDevice,
+};
