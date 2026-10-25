@@ -2,7 +2,7 @@ name: Check Schedule Brera
 
 on:
   schedule:
-    - cron: '0 */4 * * *' # ogni 4 ore (UTC)
+    - cron: '0 */1 * * *'
   workflow_dispatch:
 
 permissions:
