@@ -200,8 +200,11 @@ function AppContent() {
     });
   }, [setCourseColors]);
 
+  const favoritesRef = useRef(favorites);
+  useEffect(() => { favoritesRef.current = favorites; }, [favorites]);
+
   const toggleFav = useCallback((id) => {
-    const removing = favorites.has(id);
+    const removing = favoritesRef.current.has(id);
 
     setFavorites((prev) => {
       const next = new Set(prev);
@@ -230,7 +233,7 @@ function AppContent() {
         return next;
       });
     }
-  }, [favorites, setFavorites, setEdits, setCourseColors, setChanges]);
+  }, [setFavorites, setEdits, setCourseColors, setChanges]);
 
   const handleQueryChange = useCallback((nextQuery) => {
     setSortFavorites(new Set(favorites));
@@ -571,6 +574,15 @@ function AppContent() {
             onLoadEnd={onWebLoaded}
             onMessage={onWebMessage}
             onError={() => fail(t('errors.webview'))}
+            onShouldStartLoadWithRequest={({ url }) => {
+                if (url === 'about:blank') return true;
+
+                try {
+                    return new URL(url).origin === 'https://localhost';
+                } catch {
+                    return false;
+                }
+                }}
           />
         </View>
       )}

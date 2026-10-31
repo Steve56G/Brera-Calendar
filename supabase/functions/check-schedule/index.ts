@@ -202,14 +202,21 @@ export default {
     };
 
     const sendNotifications = async (updates: Update[]): Promise<number> => {
-      const { data, error } = await db
+      const PAGE_SIZE = 1000;
+      const devices: DeviceRow[] = [];
+      
+      for (let from = 0; ; from += PAGE_SIZE) {
+        const { data, error } = await db
         .from('devices')
         .select('expo_push_token, only_current_semester, language')
-        .eq('notifications_active', true);
+        .eq('notifications_active', true)
+        .order('expo_push_token')
+        .range(from, from + PAGE_SIZE - 1);
+        if (error) throw error;
+        devices.push(...((data ?? []) as DeviceRow[]));
+        if (!data || data.length < PAGE_SIZE) break;
+      }   
 
-      if (error) throw error;
-
-      const devices = (data ?? []) as DeviceRow[];
       const currentSemester: Semester = isCurrentSemester('PRIMO') ? 'PRIMO' : 'SECONDO';
       const messages = devices
         .map((device) => notificationForDevice(device, updates, currentSemester))

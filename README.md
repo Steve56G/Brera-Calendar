@@ -13,7 +13,7 @@ Si possono abilitare le notifiche per ricevere notifiche quando viene aggiornato
 
 ## Dati e privacy
 
-Non sono necessarie chiavi API o variabili d'ambiente per eseguire l'app. Orari importati, preferiti, profilo e modifiche vengono conservati sul dispositivo tramite AsyncStorage; il progetto non configura un backend o un servizio di analytics.
+Non sono necessarie chiavi API o variabili d'ambiente per eseguire l'app. Orari importati, preferiti, profilo e modifiche vengono conservati sul dispositivo tramite AsyncStorage; il progetto ha un servizio di backend diverse funzionalità dell'app (notifiche).
 
 Per leggere i PDF, l'app carica PDF.js e il relativo worker dalla CDN pubblica cdnjs. L'importazione richiede quindi una connessione Internet per scaricare la libreria; il PDF viene elaborato nella WebView locale dell'app e non viene caricato su un servizio remoto.
 

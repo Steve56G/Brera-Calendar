@@ -4,7 +4,6 @@
 // Le variabili EXPO_PUBLIC_* sono un override opzionale per build diverse.
 
 import 'react-native-url-polyfill/auto';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
 import { createClient } from '@supabase/supabase-js';
 
@@ -16,15 +15,8 @@ const supabaseKey =
   process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ||
   Constants.expoConfig?.extra?.supabasePublishableKey;
 
-// Se la configurazione manca l'app resta utilizzabile: le funzioni che usano
-// Supabase controllano `supabase` e non fanno nulla.
 export const supabase = supabaseUrl && supabaseKey
   ? createClient(supabaseUrl, supabaseKey, {
-      auth: {
-        storage: AsyncStorage,
-        autoRefreshToken: true,
-        persistSession: true,
-        detectSessionInUrl: false,
-      },
+      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
     })
   : null;

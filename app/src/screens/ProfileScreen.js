@@ -24,11 +24,16 @@ const EMPTY_PROFILE = {
 };
 
 const FIELDS = [
-  { key: 'firstName' },
-  { key: 'lastName' },
-  { key: 'institutionalEmail', keyboardType: 'email-address', autoCapitalize: 'none' },
-  { key: 'studentId' },
-  { key: 'degreeCourse' },
+  { key: 'firstName', maxLength: 80 },
+  { key: 'lastName', maxLength: 80 },
+  {
+    key: 'institutionalEmail',
+    keyboardType: 'email-address',
+    autoCapitalize: 'none',
+    maxLength: 254,
+  },
+  { key: 'studentId', maxLength: 40 },
+  { key: 'degreeCourse', maxLength: 120 },
 ];
 
 function Header({ onBack }) {
@@ -52,7 +57,14 @@ export default function ProfileScreen({ visible, profile, onClose, onSave }) {
   const [form, setForm] = useState(() => ({ ...EMPTY_PROFILE, ...(profile || {}) }));
 
   const save = () => {
-    onSave({ ...EMPTY_PROFILE, ...form });
+    const cleanProfile = Object.fromEntries(
+    Object.entries({ ...EMPTY_PROFILE, ...form }).map(([key, value]) => [
+      key,
+      typeof value === 'string' ? value.trim() : value,
+    ])
+    );
+
+    onSave(cleanProfile);
     onClose();
   };
 
@@ -67,7 +79,7 @@ export default function ProfileScreen({ visible, profile, onClose, onSave }) {
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
             >
-              {FIELDS.map(({ key, keyboardType, autoCapitalize }) => {
+              {FIELDS.map(({ key, keyboardType, autoCapitalize, maxLength }) => {
                 const label = t(`profile.${key}`);
                 return (
                 <View key={key} style={styles.field}>
@@ -82,6 +94,7 @@ export default function ProfileScreen({ visible, profile, onClose, onSave }) {
                     autoCapitalize={autoCapitalize || 'words'}
                     autoCorrect={key !== 'institutionalEmail'}
                     returnKeyType="next"
+                    maxLength={maxLength}
                   />
                 </View>
                 );

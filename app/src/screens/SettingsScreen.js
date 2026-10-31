@@ -211,7 +211,7 @@ export default function SettingsScreen({
               </View>
               <View style={styles.supportArea}>
                 <Text style={styles.supportNote}>{t('settings.supportNote')}</Text>
-                <Pressable style={styles.supportBtn} onPress={() => Linking.openURL(SUPPORT_URL)} accessibilityRole="link">
+                <Pressable style={styles.supportBtn} onPress={() => Linking.openURL(SUPPORT_URL).catch(() => {})} accessibilityRole="link">
                   <Text style={styles.supportText}>ko-fi</Text>
                 </Pressable>
               </View>

@@ -129,14 +129,16 @@ export async function registerDevice({
 
     const token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
 
+    // Se il salvataggio locale fallisce, non registrare il device remoto.
+    await AsyncStorage.setItem(TOKEN_KEY, token);
+
     await saveDevice({
-      token,
-      notificationsActive: true,
-      onlyCurrentSemester,
-      language: deviceLanguage,
+        token,
+        notificationsActive: true,
+        onlyCurrentSemester,
+        language: deviceLanguage,
     });
 
-    await AsyncStorage.setItem(TOKEN_KEY, token).catch(() => {});
     return token;
   } catch (e) {
     const message = [e?.message || String(e), e?.code, e?.hint].filter(Boolean).join(' | ');
