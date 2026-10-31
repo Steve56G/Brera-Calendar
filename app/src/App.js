@@ -28,7 +28,7 @@ import ProfileScreen from './screens/ProfileScreen';
 import { LanguageProvider, useTranslation } from './i18n/LanguageProvider';
 import { mergeSchedules } from './services/updateMerge';
 import { downloadPdfBase64, fileNameFromUrl, findLatestTimetableUrl, timetableErrorMessage } from './services/breraTimetable';
-import { registerDevice } from './services/notifications';
+import { registerDevice, unregisterDevice } from './services/notifications';
 import { useNotificationNavigation } from './hooks/useNotificationNavigation';
 
 // SDK 54+: la vecchia API (readAsStringAsync, copyAsync...) sta in 'expo-file-system/legacy'.
@@ -154,15 +154,19 @@ function AppContent() {
     notificationsSyncQueueRef.current = notificationsSyncQueueRef.current
       .then(async () => {
         setNotificationError(null);
+        if (!notificationPrefs.enabled) {
+          // Notifiche disattivate: il device viene rimosso del tutto da Supabase.
+          await unregisterDevice({ onError: setNotificationError });
+          return;
+        }
         await registerDevice({
-          notificationsActive: notificationPrefs.enabled,
           onlyCurrentSemester: notificationPrefs.onlyCurrentSemester,
           language,
           requestPermissions,
           onError: setNotificationError,
-        });
-      })
-      .catch(() => {});
+      });
+    })
+    .catch(() => {});
   }, [loaded, language, notificationPrefs, notificationRetry]);
 
   // Aggiorna le preferenze normalizzando la gerarchia:

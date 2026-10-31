@@ -50,7 +50,6 @@ async function saveDevice({ token, notificationsActive, onlyCurrentSemester, lan
  * @returns {Promise<string|null>} token Expo, oppure null se non registrato.
  */
 export async function registerDevice({
-  notificationsActive = true,
   onlyCurrentSemester = false,
   language = 'it',
   requestPermissions = true,
@@ -78,20 +77,6 @@ export async function registerDevice({
   const deviceLanguage = language === 'en' ? 'en' : 'it';
 
   try {
-    if (!notificationsActive) {
-      const token = await AsyncStorage.getItem(TOKEN_KEY);
-      if (!token) return null;
-
-      await saveDevice({
-        token,
-        notificationsActive: false,
-        onlyCurrentSemester: false,
-        language: deviceLanguage,
-      });
-
-      return token;
-    }
-
     const Notifications = getNotifications();
     if (!Notifications) {
       onError?.('expo-notifications non disponibile in questa build');
@@ -148,5 +133,36 @@ export async function registerDevice({
     );
     onError?.(message);
     return null;
+  }
+}
+
+/**
+ * Rimuove completamente il device dalla tabella `devices` (non lascia righe disattivate).
+ * Il token resta salvato in locale finché la cancellazione non va a buon fine,
+ * così un errore (ad es. offline) viene ritentato al prossimo avvio o con "Riprova".
+ *
+ * @returns {Promise<boolean>} true se non c'è più nulla da cancellare.
+ */
+export async function unregisterDevice({ onError } = {}) {
+  if (Platform.OS === 'web') return true;
+  try {
+    const token = await AsyncStorage.getItem(TOKEN_KEY);
+    if (!token) return true; // niente da cancellare
+
+    if (!supabase) {
+      onError?.('Supabase non configurato: controlla app.json > extra o le variabili EXPO_PUBLIC_SUPABASE_*');
+      return false;
+    }
+
+    const { error } = await supabase.rpc('unregister_device', { p_token: token });
+    if (error) throw error;
+
+    await AsyncStorage.removeItem(TOKEN_KEY);
+    return true;
+  } catch (e) {
+    const message = [e?.message || String(e), e?.code, e?.hint].filter(Boolean).join(' | ');
+    if (__DEV__) console.warn(`[notifications] rimozione del dispositivo fallita: ${message}`);
+    onError?.(message);
+    return false;
   }
 }
