@@ -49,8 +49,8 @@
     "analyzing": "Analisi della griglia…",
     "updatedTitle": "Calendario aggiornato",
     "missingFavorites": {
-      "one": "%{count} corso preferito non presente nel nuovo PDF è stato rimosso dai preferiti.",
-      "other": "%{count} corsi preferiti non presenti nel nuovo PDF sono stati rimossi dai preferiti."
+      "one": "%{count} corso preferito non presente nel nuovo PDF è stato rimosso dai preferiti",
+      "other": "%{count} corsi preferiti non presenti nel nuovo PDF sono stati rimossi dai preferiti"
     },
     "latest": "Importa ultimo orario",
     "pickFile": "Seleziona un PDF dal dispositivo",
@@ -65,7 +65,7 @@
     "update": "Aggiorna calendario"
   },
   "list": {
-    "idleHint": "Importa il PDF dell’orario per cercare materie e docenti.",
+    "idleHint": "Importa il PDF dell’orario per cercare materie e docenti",
     "errorTitle": "Qualcosa è andato storto",
     "searchPlaceholder": "Cerca materia o professore…",
     "results": {
@@ -74,22 +74,22 @@
     },
     "toVerify": "%{count} da verificare",
     "noResults": "Nessun risultato",
-    "noRowsRecognized": "Nel PDF non sono state riconosciute righe. Verifica che sia un orario valido e riprova.",
-    "noMatch": "Nessuna materia o docente corrisponde a “%{query}”."
+    "noRowsRecognized": "Nel PDF non sono state riconosciute righe. Verifica che sia un orario valido e riprova",
+    "noMatch": "Nessuna materia o docente corrisponde a “%{query}”"
   },
   "errors": {
-    "timeout": "Timeout: pdf.js non ha risposto. Controlla la connessione internet e riprova.",
+    "timeout": "Timeout: pdf.js non ha risposto. Controlla la connessione internet e riprova",
     "openFile": "Impossibile aprire il file: %{message}",
     "noRowsUpdate": "nessuna riga riconosciuta nel PDF, calendario non modificato",
     "parsing": "Errore nel parsing: %{message}",
-    "unknownRead": "Errore sconosciuto durante la lettura del PDF.",
-    "webview": "Errore di caricamento della WebView.",
-    "pdfjsNotLoaded": "pdf.js non caricato: serve una connessione internet.",
+    "unknownRead": "Errore sconosciuto durante la lettura del PDF",
+    "webview": "Errore di caricamento della WebView",
+    "pdfjsNotLoaded": "pdf.js non caricato: serve una connessione internet",
     "title": "Errore",
-    "network": "Impossibile raggiungere il sito dell’Accademia. Controlla la connessione internet e riprova.",
-    "siteHttp": "Il sito dell’Accademia ha risposto con un errore (%{status}).",
-    "timetableNotFound": "Il PDF del %{semester} semestre non è stato trovato nella pagina degli orari. Riprova più tardi oppure selezionalo a mano dal dispositivo.",
-    "notPdf": "Il file scaricato non è un PDF valido.",
+    "network": "Impossibile raggiungere il sito dell’Accademia. Controlla la connessione internet e riprova",
+    "siteHttp": "Il sito dell’Accademia ha risposto con un errore (%{status})",
+    "timetableNotFound": "Il PDF del %{semester} semestre non è stato trovato nella pagina degli orari. Riprova più tardi oppure selezionalo a mano dal dispositivo",
+    "notPdf": "Il file scaricato non è un PDF valido",
     "downloadFailed": "Download del PDF non riuscito: %{message}"
   },
   "changes": {
@@ -149,10 +149,10 @@
     "officeHours": "Ricevimenti",
     "officeHoursPrefix": "Ricevimento · ",
     "addLesson": "+ Lezione",
-    "emptyHint": "Nessun corso nei preferiti. Tocca la stella su un corso nella lista: tutte le sue lezioni compariranno qui.",
-    "tip": "Tocca un box per modificarlo. Tieni premuto per rimuovere il corso dai preferiti.",
+    "emptyHint": "Nessun corso nei preferiti. Tocca la stella su un corso nella lista",
+    "tip": "Tocca un box per modificarlo. Tieni premuto per rimuovere il corso dai preferiti",
     "removeTitle": "Rimuovere il corso dai preferiti?",
-    "removeMessage": "Vuoi rimuovere %{subject} dai preferiti? Tutte le sue lezioni scompariranno dal calendario.",
+    "removeMessage": "Vuoi rimuovere %{subject} dai preferiti? Tutte le sue lezioni scompariranno dal calendario",
     "remove": "Rimuovi"
   },
   "rooms": {
@@ -161,10 +161,10 @@
       "one": "%{count} aula",
       "other": "%{count} aule"
     },
-    "noMatch": "Nessuna aula corrisponde alla ricerca.",
-    "noneDetected": "Nessuna aula rilevata nei dati del PDF.",
-    "importHint": "Importa il PDF dell’orario per vedere la disponibilità delle aule.",
-    "selectHint": "Seleziona un’aula per vedere le ore occupate.",
+    "noMatch": "Nessuna aula corrisponde alla ricerca",
+    "noneDetected": "Nessuna aula rilevata nei dati del PDF",
+    "importHint": "Importa il PDF dell’orario per vedere la disponibilità delle aule",
+    "selectHint": "Seleziona un’aula per vedere le ore occupate",
     "busyHours": {
       "one": "%{count} ora occupata",
       "other": "%{count} ore occupate"
@@ -174,6 +174,10 @@
   "lesson": {
     "heading": "Modifica lezione",
     "cancelClose": "Annulla e chiudi",
+    "discardChangesTitle": "Scartare le modifiche?",
+    "discardChangesMessage": "Hai apportato modifiche non salvate. Vuoi uscire senza salvarle?",
+    "discardChanges": "Sì, scarta",
+    "keepEditing": "No, continua",
     "day": "Giorno",
     "title": "Titolo",
     "titlePlaceholder": "Titolo della lezione",
@@ -191,15 +195,12 @@
     "minus30": "%{label} -30 minuti",
     "plus30": "%{label} +30 minuti",
     "save": "Salva modifiche",
-    "errTitle": "Inserisci un titolo.",
-    "errTimeFormat": "Orario non valido: usa il formato HH:MM con minuti 00 o 30.",
-    "errTimeRange": "L'orario deve essere compreso tra %{min} e %{max}.",
-    "errTimeOrder": "L'orario di fine deve essere successivo a quello di inizio.",
+    "errTitle": "Inserisci un titolo",
+    "errTimeFormat": "Orario non valido: usa il formato HH:MM con minuti 00 o 30",
+    "errTimeRange": "L'orario deve essere compreso tra %{min} e %{max}",
+    "errTimeOrder": "L'orario di fine deve essere successivo a quello di inizio",
     "deleteTitle": "Eliminare la lezione?",
-    "deleteMessage": "Verrà rimossa solo questa lezione. Le altre lezioni del corso resteranno nel calendario.",
-    "unsavedTitle": "Modifiche non salvate",
-    "unsavedMessage": "Hai modificato alcuni campi. Vuoi uscire senza salvare?",
-    "discard": "Scarta"
+    "deleteMessage": "Verrà rimossa solo questa lezione. Le altre lezioni del corso resteranno nel calendario"
   },
   "colors": {
     "default": "Predefinito",
@@ -222,18 +223,18 @@
     "general": "Generale",
     "about": "Informazioni",
     "clearCalendar": "Pulisci calendario",
-    "clearNote": "Elimina orario importato, corsi preferiti e modifiche ai corsi salvati su questo dispositivo.",
+    "clearNote": "Elimina orario importato, corsi preferiti e modifiche ai corsi salvati su questo dispositivo",
     "clearTitle": "Pulire il calendario?",
-    "clearMessage": "Verranno eliminati l'orario importato, i corsi preferiti e tutte le modifiche alle lezioni. L'operazione non è reversibile.",
+    "clearMessage": "Verranno eliminati l'orario importato, i corsi preferiti e tutte le modifiche alle lezioni. L'operazione non è reversibile",
     "clearConfirm": "Pulisci",
-    "clearDone": "I dati del calendario sono stati eliminati.",
+    "clearDone": "I dati del calendario sono stati eliminati",
     "language": "Lingua",
     "notifications": "Notifiche",
     "notificationsEnabled": "Abilita notifiche",
-    "notificationsEnabledHint": "Ricevi un avviso quando viene pubblicato un nuovo orario.",
+    "notificationsEnabledHint": "Ricevi un avviso quando viene pubblicato un nuovo orario",
     "notificationsOnlyCurrent": "Notificami solo il cambiamento dell'orario del semestre corrente",
-    "notificationsOnlyCurrentHint": "Ignora gli aggiornamenti dell'altro semestre.",
-    "notificationsError": "Impossibile registrare le notifiche su questo dispositivo.",
+    "notificationsOnlyCurrentHint": "Ignora gli aggiornamenti dell'altro semestre",
+    "notificationsError": "Impossibile registrare le notifiche su questo dispositivo",
     "notificationsRetry": "Riprova",
     "version": "Versione %{version}",
     "supportNote": "L'app è completamente gratuita e open source, ma se vuoi darmi più di una pacca sulla spalla puoi offrirmi qualcosa su questo link!"

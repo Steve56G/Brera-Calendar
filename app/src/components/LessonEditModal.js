@@ -78,19 +78,56 @@ function TimeField({ label, value, onChange }) {
  */
 export default function LessonEditModal({ visible, lesson, color, isCustom = false, onSave, onDelete, onCancel }) {
   const { t, dayName, dayShort } = useTranslation();
-  const [title, setTitle] = useState(() => lesson?.subject || '');
-  const [professor, setProfessor] = useState(() => lesson?.professor || '');
-  const [room, setRoom] = useState(() => lesson?.details || '');
-  const [note, setNote] = useState(() => lesson?.note || '');
+  const [initialValues] = useState(() => ({
+    title: lesson?.subject || '',
+    professor: lesson?.professor || '',
+    room: lesson?.details || '',
+    note: lesson?.note || '',
+    selectedColor: color || null,
+    dayIndex: lesson?.dayIndex ?? 0,
+    startT: lesson?.startLabel || fmt(lesson?.start ?? MIN_H),
+    endT: lesson?.endLabel || fmt(lesson?.end ?? MIN_H),
+  }));
+  const [title, setTitle] = useState(() => initialValues.title);
+  const [professor, setProfessor] = useState(() => initialValues.professor);
+  const [room, setRoom] = useState(() => initialValues.room);
+  const [note, setNote] = useState(() => initialValues.note);
   const [noteBoxHeight, setNoteBoxHeight] = useState(NOTE_BOX_MIN_H);
   const [noteTextHeight, setNoteTextHeight] = useState(60);
   const [noteEditing, setNoteEditing] = useState(false);
   const noteInputRef = useRef(null);
-  const [selectedColor, setSelectedColor] = useState(() => color || null);
-  const [dayIndex, setDayIndex] = useState(() => lesson?.dayIndex ?? 0);
-  const [startT, setStartT] = useState(() => lesson?.startLabel || fmt(lesson?.start ?? MIN_H));
-  const [endT, setEndT] = useState(() => lesson?.endLabel || fmt(lesson?.end ?? MIN_H));
+  const [selectedColor, setSelectedColor] = useState(() => initialValues.selectedColor);
+  const [dayIndex, setDayIndex] = useState(() => initialValues.dayIndex);
+  const [startT, setStartT] = useState(() => initialValues.startT);
+  const [endT, setEndT] = useState(() => initialValues.endT);
   const [error, setError] = useState('');
+
+  const hasUnsavedChanges =
+    title !== initialValues.title ||
+    professor !== initialValues.professor ||
+    room !== initialValues.room ||
+    note !== initialValues.note ||
+    selectedColor !== initialValues.selectedColor ||
+    dayIndex !== initialValues.dayIndex ||
+    startT !== initialValues.startT ||
+    endT !== initialValues.endT;
+
+  const handleRequestClose = () => {
+    if (!hasUnsavedChanges) {
+      onCancel?.();
+      return;
+    }
+
+    Alert.alert(
+      t('lesson.discardChangesTitle'),
+      t('lesson.discardChangesMessage'),
+      [
+        { text: t('lesson.keepEditing'), style: 'cancel' },
+        { text: t('lesson.discardChanges'), style: 'destructive', onPress: () => onCancel?.() },
+      ],
+      { cancelable: true }
+    );
+  };
 
   useEffect(() => {
     if (noteEditing) noteInputRef.current?.focus();
@@ -120,16 +157,16 @@ export default function LessonEditModal({ visible, lesson, color, isCustom = fal
   };
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onCancel}>
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={handleRequestClose}>
       <SafeAreaProvider>
         <KeyboardAvoidingView style={styles.overlay} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-          <Pressable style={StyleSheet.absoluteFill} onPress={onCancel} />
+          <Pressable style={StyleSheet.absoluteFill} onPress={handleRequestClose} accessibilityRole="button" accessibilityLabel={t('lesson.cancelClose')} />
           <SafeAreaView edges={['bottom']} style={styles.sheet}>
           <View style={styles.modalHeader}>
             <View style={styles.handle} />
             <View style={styles.titleRow}>
               <Text style={styles.heading}>{t('lesson.heading')}</Text>
-              <Pressable onPress={onCancel} hitSlop={10} accessibilityRole="button" accessibilityLabel={t('lesson.cancelClose')}>
+              <Pressable onPress={handleRequestClose} hitSlop={10} accessibilityRole="button" accessibilityLabel={t('lesson.cancelClose')}>
                 <Text style={styles.cancelText}>{t('common.cancel')}</Text>
               </Pressable>
             </View>
@@ -139,7 +176,7 @@ export default function LessonEditModal({ visible, lesson, color, isCustom = fal
             style={styles.fieldsScroll}
             contentContainerStyle={styles.fieldsContent}
             keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator
+            showsVerticalScrollIndicator={false}
           >
             <Text style={styles.label}>{t('lesson.day')}</Text>
             <View style={styles.daysRow}>
@@ -156,6 +193,8 @@ export default function LessonEditModal({ visible, lesson, color, isCustom = fal
                 </Pressable>
               ))}
             </View>
+
+            {!!error && <Text style={styles.error}>{error}</Text>}
 
             <FloatingLabelInput
               containerStyle={styles.inputContainer}
@@ -231,8 +270,6 @@ export default function LessonEditModal({ visible, lesson, color, isCustom = fal
               <TimeField label={t('lesson.start')} value={startT} onChange={setStartT} />
               <TimeField label={t('lesson.end')} value={endT} onChange={setEndT} />
             </View>
-
-            {!!error && <Text style={styles.error}>{error}</Text>}
           </ScrollView>
 
           <View style={styles.actions}>
@@ -252,7 +289,7 @@ export default function LessonEditModal({ visible, lesson, color, isCustom = fal
 
 const styles = StyleSheet.create({
   overlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(17,24,39,0.45)' },
-  sheet: { maxHeight: '90%', flexShrink: 1, backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, paddingBottom: 28 },
+  sheet: { height: '85%', maxHeight: '90%', flexShrink: 1, backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, paddingBottom: 28 },
   modalHeader: { flexShrink: 0 },
   handle: { alignSelf: 'center', width: 40, height: 4, borderRadius: 2, backgroundColor: '#D1D5DB', marginBottom: 14 },
   titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 },
@@ -260,7 +297,7 @@ const styles = StyleSheet.create({
   cancelText: { fontSize: 14, fontWeight: '600', color: '#2563EB' },
   fieldsScroll: { flexShrink: 1 },
   fieldsContent: { paddingBottom: 4 },
-  label: { fontSize: 12, fontWeight: '600', color: '#6B7280', marginBottom: 6 , color: "#2563EB"},
+  label: { fontSize: 12, fontWeight: '600', color: '#2563EB', marginBottom: 6 },
   inputContainer: {
     height: 58,
     backgroundColor: '#F9FAFB',

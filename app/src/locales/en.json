@@ -49,8 +49,8 @@
     "analyzing": "Analyzing grid…",
     "updatedTitle": "Calendar updated",
     "missingFavorites": {
-      "one": "%{count} favorite course not found in the new PDF was removed from favorites.",
-      "other": "%{count} favorite courses not found in the new PDF were removed from favorites."
+      "one": "%{count} favorite course not found in the new PDF was removed from favorites",
+      "other": "%{count} favorite courses not found in the new PDF were removed from favorites"
     },
     "latest": "Import latest timetable",
     "pickFile": "Select a PDF from the device",
@@ -65,7 +65,7 @@
     "update": "Update calendar"
   },
   "list": {
-    "idleHint": "Import the timetable PDF to search courses and professors.",
+    "idleHint": "Import the timetable PDF to search courses and professors",
     "errorTitle": "Something went wrong",
     "searchPlaceholder": "Search course or professor…",
     "results": {
@@ -74,22 +74,22 @@
     },
     "toVerify": "%{count} to verify",
     "noResults": "No results",
-    "noRowsRecognized": "No rows were recognized in the PDF. Make sure it is a valid timetable and try again.",
-    "noMatch": "No course or professor matches “%{query}”."
+    "noRowsRecognized": "No rows were recognized in the PDF. Make sure it is a valid timetable and try again",
+    "noMatch": "No course or professor matches “%{query}”"
   },
   "errors": {
-    "timeout": "Timeout: pdf.js did not respond. Check your internet connection and try again.",
+    "timeout": "Timeout: pdf.js did not respond. Check your internet connection and try again",
     "openFile": "Unable to open the file: %{message}",
     "noRowsUpdate": "no rows recognized in the PDF, calendar not modified",
     "parsing": "Parsing error: %{message}",
-    "unknownRead": "Unknown error while reading the PDF.",
-    "webview": "WebView loading error.",
-    "pdfjsNotLoaded": "pdf.js not loaded: an internet connection is required.",
+    "unknownRead": "Unknown error while reading the PDF",
+    "webview": "WebView loading error",
+    "pdfjsNotLoaded": "pdf.js not loaded: an internet connection is required",
     "title": "Error",
-    "network": "Unable to reach the Academy website. Check your internet connection and try again.",
-    "siteHttp": "The Academy website returned an error (%{status}).",
-    "timetableNotFound": "The PDF for the %{semester} semester was not found on the timetable page. Try again later or select it manually from the device.",
-    "notPdf": "The downloaded file is not a valid PDF.",
+    "network": "Unable to reach the Academy website. Check your internet connection and try again",
+    "siteHttp": "The Academy website returned an error (%{status})",
+    "timetableNotFound": "The PDF for the %{semester} semester was not found on the timetable page. Try again later or select it manually from the device",
+    "notPdf": "The downloaded file is not a valid PDF",
     "downloadFailed": "PDF download failed: %{message}"
   },
   "changes": {
@@ -149,10 +149,10 @@
     "officeHours": "Office hours",
     "officeHoursPrefix": "Office hours · ",
     "addLesson": "+ Lesson",
-    "emptyHint": "No favorite courses. Tap the star on a course in the list: all its lessons will appear here.",
-    "tip": "Tap a box to edit it. Long-press to remove the course from favorites.",
+    "emptyHint": "No favorite courses. Tap the star on a course in the list: all its lessons will appear here",
+    "tip": "Tap a box to edit it. Long-press to remove the course from favorites",
     "removeTitle": "Remove the course from favorites?",
-    "removeMessage": "Do you want to remove %{subject} from favorites? All its lessons will disappear from the calendar.",
+    "removeMessage": "Do you want to remove %{subject} from favorites? All its lessons will disappear from the calendar",
     "remove": "Remove"
   },
   "rooms": {
@@ -161,10 +161,10 @@
       "one": "%{count} room",
       "other": "%{count} rooms"
     },
-    "noMatch": "No room matches your search.",
-    "noneDetected": "No rooms detected in the PDF data.",
-    "importHint": "Import the timetable PDF to see room availability.",
-    "selectHint": "Select a room to see its occupied hours.",
+    "noMatch": "No room matches your search",
+    "noneDetected": "No rooms detected in the PDF data",
+    "importHint": "Import the timetable PDF to see room availability",
+    "selectHint": "Select a room to see its occupied hours",
     "busyHours": {
       "one": "%{count} hour occupied",
       "other": "%{count} hours occupied"
@@ -174,6 +174,10 @@
   "lesson": {
     "heading": "Edit lesson",
     "cancelClose": "Cancel and close",
+    "discardChangesTitle": "Discard changes?",
+    "discardChangesMessage": "You have unsaved changes. Do you want to leave without saving them?",
+    "discardChanges": "Yes, discard",
+    "keepEditing": "No, keep editing",
     "day": "Day",
     "title": "Title",
     "titlePlaceholder": "Lesson title",
@@ -191,15 +195,12 @@
     "minus30": "%{label} -30 minutes",
     "plus30": "%{label} +30 minutes",
     "save": "Save changes",
-    "errTitle": "Enter a title.",
-    "errTimeFormat": "Invalid time: use the HH:MM format with minutes 00 or 30.",
-    "errTimeRange": "The time must be between %{min} and %{max}.",
-    "errTimeOrder": "The end time must be later than the start time.",
+    "errTitle": "Enter a title",
+    "errTimeFormat": "Invalid time: use the HH:MM format with minutes 00 or 30",
+    "errTimeRange": "The time must be between %{min} and %{max}",
+    "errTimeOrder": "The end time must be later than the start time",
     "deleteTitle": "Delete the lesson?",
-    "deleteMessage": "Only this lesson will be removed. The course's other lessons will stay in the calendar.",
-    "unsavedTitle": "Unsaved changes",
-    "unsavedMessage": "You have unsaved changes. Do you want to leave without saving?",
-    "discard": "Discard"
+    "deleteMessage": "Only this lesson will be removed. The course's other lessons will stay in the calendar"
   },
   "colors": {
     "default": "Default",
@@ -222,18 +223,18 @@
     "general": "General",
     "about": "About",
     "clearCalendar": "Clear calendar",
-    "clearNote": "Deletes the imported timetable, favorite courses and course edits saved on this device.",
+    "clearNote": "Deletes the imported timetable, favorite courses and course edits saved on this device",
     "clearTitle": "Clear the calendar?",
-    "clearMessage": "The imported timetable, favorite courses and all lesson edits will be deleted. This action cannot be undone.",
+    "clearMessage": "The imported timetable, favorite courses and all lesson edits will be deleted. This action cannot be undone",
     "clearConfirm": "Clear",
-    "clearDone": "The calendar data has been deleted.",
+    "clearDone": "The calendar data has been deleted",
     "language": "Language",
     "notifications": "Notifications",
     "notificationsEnabled": "Enable notifications",
-    "notificationsEnabledHint": "Get notified when a new timetable is published.",
+    "notificationsEnabledHint": "Get notified when a new timetable is published",
     "notificationsOnlyCurrent": "Notify me only when the current semester's timetable changes",
-    "notificationsOnlyCurrentHint": "Ignore updates for the other semester.",
-    "notificationsError": "Could not register notifications for this device.",
+    "notificationsOnlyCurrentHint": "Ignore updates for the other semester",
+    "notificationsError": "Could not register notifications for this device",
     "notificationsRetry": "Try again",
     "version": "Version %{version}",
     "supportNote": "The app is completely free and open source, but if you'd like to give me more than a pat on the back, you can buy me something at this link!"

@@ -1,4 +1,4 @@
-import React, { forwardRef, useEffect, useRef, useState } from 'react';
+import React, { forwardRef, useEffect, useState } from 'react';
 import { Animated, StyleSheet, TextInput, View } from 'react-native';
 
 export function FloatingLabel({
@@ -7,7 +7,7 @@ export function FloatingLabel({
   style,
   restingTranslateY = 14,
 }) {
-  const progress = useRef(new Animated.Value(floated ? 1 : 0)).current;
+  const [progress] = useState(() => new Animated.Value(floated ? 1 : 0));
 
   useEffect(() => {
     const animation = Animated.timing(progress, {
@@ -111,7 +111,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     zIndex: 1,
     left: 14,
-    top: 8,
+    top: 6,
     fontWeight: '500',
   },
   input: {
