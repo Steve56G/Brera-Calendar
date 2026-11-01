@@ -196,7 +196,10 @@
     "errTimeRange": "The time must be between %{min} and %{max}.",
     "errTimeOrder": "The end time must be later than the start time.",
     "deleteTitle": "Delete the lesson?",
-    "deleteMessage": "Only this lesson will be removed. The course's other lessons will stay in the calendar."
+    "deleteMessage": "Only this lesson will be removed. The course's other lessons will stay in the calendar.",
+    "unsavedTitle": "Unsaved changes",
+    "unsavedMessage": "You have unsaved changes. Do you want to leave without saving?",
+    "discard": "Discard"
   },
   "colors": {
     "default": "Default",

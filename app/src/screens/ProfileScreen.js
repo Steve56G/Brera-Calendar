@@ -8,12 +8,12 @@ import {
   StatusBar,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from '../i18n/LanguageProvider';
+import FloatingTextInput from '../components/FloatingTextInput';
 
 const EMPTY_PROFILE = {
   firstName: '',
@@ -81,22 +81,20 @@ export default function ProfileScreen({ visible, profile, onClose, onSave }) {
             >
               {FIELDS.map(({ key, keyboardType, autoCapitalize, maxLength }) => {
                 const label = t(`profile.${key}`);
+                const value = form[key] || '';
+
                 return (
-                <View key={key} style={styles.field}>
-                  <Text style={styles.label}>{label}</Text>
-                  <TextInput
-                    style={styles.input}
-                    value={form[key] || ''}
-                    onChangeText={(value) => setForm((current) => ({ ...current, [key]: value }))}
-                    placeholder={label}
-                    placeholderTextColor="#9CA3AF"
+                  <FloatingTextInput
+                    key={key}
+                    label={label}
+                    value={value}
+                    onChangeText={(text) => setForm((current) => ({ ...current, [key]: text }))}
                     keyboardType={keyboardType || 'default'}
                     autoCapitalize={autoCapitalize || 'words'}
                     autoCorrect={key !== 'institutionalEmail'}
                     returnKeyType="next"
                     maxLength={maxLength}
                   />
-                </View>
                 );
               })}
               <Pressable style={({ pressed }) => [styles.saveBtn, pressed && { opacity: 0.85 }]} onPress={save}>
@@ -113,28 +111,28 @@ export default function ProfileScreen({ visible, profile, onClose, onSave }) {
 const TOP = Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + 12 : 56;
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#F3F4F6' },
-  content: { flex: 1, paddingTop: TOP, paddingHorizontal: 16 },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 },
+  root: { flex: 1, backgroundColor: '#F9FAFB' },
+  content: { flex: 1, paddingTop: TOP, paddingHorizontal: 20 },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 },
   backBtn: { width: 90 },
   backContent: { flexDirection: 'row', alignItems: 'center' },
   backText: { color: '#2563EB', fontSize: 16, fontWeight: '600' },
-  headerTitle: { fontSize: 18, fontWeight: '800', color: '#111827' },
-  form: { gap: 14, paddingBottom: 20 },
-  field: { gap: 6 },
-  label: { color: '#374151', fontSize: 14, fontWeight: '600' },
-  input: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    color: '#111827',
-    fontSize: 16,
+  headerTitle: { fontSize: 20, fontWeight: '800', color: '#111827' },
+  form: { gap: 16, paddingBottom: 24 },
+  saveBtn: {
+    backgroundColor: '#2563EB',
+    borderRadius: 14,
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginTop: 8,
+    marginBottom: 16,
+    shadowColor: '#2563EB',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
   },
-  saveBtn: { backgroundColor: '#2563EB', borderRadius: 12, paddingVertical: 14, alignItems: 'center', marginBottom: 12 },
-  saveText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  saveText: { color: '#fff', fontSize: 16, fontWeight: '700', letterSpacing: 0.2 },
 });
 
 

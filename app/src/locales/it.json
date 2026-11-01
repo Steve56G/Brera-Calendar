@@ -196,7 +196,10 @@
     "errTimeRange": "L'orario deve essere compreso tra %{min} e %{max}.",
     "errTimeOrder": "L'orario di fine deve essere successivo a quello di inizio.",
     "deleteTitle": "Eliminare la lezione?",
-    "deleteMessage": "Verrà rimossa solo questa lezione. Le altre lezioni del corso resteranno nel calendario."
+    "deleteMessage": "Verrà rimossa solo questa lezione. Le altre lezioni del corso resteranno nel calendario.",
+    "unsavedTitle": "Modifiche non salvate",
+    "unsavedMessage": "Hai modificato alcuni campi. Vuoi uscire senza salvare?",
+    "discard": "Scarta"
   },
   "colors": {
     "default": "Predefinito",

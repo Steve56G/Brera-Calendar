@@ -13,14 +13,13 @@ import {
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import CourseColorSelector from './CourseColorSelector';
+import FloatingTextInput from './FloatingTextInput';
 import { DAYS } from '../constants/schedule';
 import { useTranslation } from '../i18n/LanguageProvider';
 
 const MIN_H = 8; // 08:00
 const MAX_H = 19; // 19:00
-const NOTE_BOX_MIN_H = 88;
 const NOTE_BOX_MAX_H = 124;
-const NOTE_INPUT_PADDING = 24;
 
 const fmt = (h) => `${String(Math.floor(h)).padStart(2, '0')}:${h % 1 ? '30' : '00'}`;
 
@@ -80,8 +79,6 @@ export default function LessonEditModal({ visible, lesson, color, isCustom = fal
   const [professor, setProfessor] = useState(() => lesson?.professor || '');
   const [room, setRoom] = useState(() => lesson?.details || '');
   const [note, setNote] = useState(() => lesson?.note || '');
-  const [noteBoxHeight, setNoteBoxHeight] = useState(NOTE_BOX_MIN_H);
-  const [noteTextHeight, setNoteTextHeight] = useState(44);
   const [noteEditing, setNoteEditing] = useState(false);
   const noteInputRef = useRef(null);
   const [selectedColor, setSelectedColor] = useState(() => color || null);
@@ -89,6 +86,31 @@ export default function LessonEditModal({ visible, lesson, color, isCustom = fal
   const [startT, setStartT] = useState(() => lesson?.startLabel || fmt(lesson?.start ?? MIN_H));
   const [endT, setEndT] = useState(() => lesson?.endLabel || fmt(lesson?.end ?? MIN_H));
   const [error, setError] = useState('');
+
+  const isDirty =
+    title.trim() !== (lesson?.subject || '').trim() ||
+    professor.trim() !== (lesson?.professor || '').trim() ||
+    room.trim() !== (lesson?.details || '').trim() ||
+    note !== (lesson?.note || '') ||
+    selectedColor !== (color || null) ||
+    dayIndex !== (lesson?.dayIndex ?? 0) ||
+    startT !== (lesson?.startLabel || fmt(lesson?.start ?? MIN_H)) ||
+    endT !== (lesson?.endLabel || fmt(lesson?.end ?? MIN_H));
+
+  const handleClose = () => {
+    if (isDirty) {
+      Alert.alert(
+        t('lesson.unsavedTitle'),
+        t('lesson.unsavedMessage'),
+        [
+          { text: t('common.cancel'), style: 'cancel' },
+          { text: t('lesson.discard'), style: 'destructive', onPress: onCancel },
+        ]
+      );
+    } else {
+      onCancel();
+    }
+  };
 
   useEffect(() => {
     if (noteEditing) noteInputRef.current?.focus();
@@ -118,16 +140,16 @@ export default function LessonEditModal({ visible, lesson, color, isCustom = fal
   };
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onCancel}>
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={handleClose}>
       <SafeAreaProvider>
         <KeyboardAvoidingView style={styles.overlay} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-          <Pressable style={StyleSheet.absoluteFill} onPress={onCancel} />
+          <Pressable style={StyleSheet.absoluteFill} onPress={handleClose} />
           <SafeAreaView edges={['bottom']} style={styles.sheet}>
           <View style={styles.modalHeader}>
             <View style={styles.handle} />
             <View style={styles.titleRow}>
               <Text style={styles.heading}>{t('lesson.heading')}</Text>
-              <Pressable onPress={onCancel} hitSlop={10} accessibilityRole="button" accessibilityLabel={t('lesson.cancelClose')}>
+              <Pressable onPress={handleClose} hitSlop={10} accessibilityRole="button" accessibilityLabel={t('lesson.cancelClose')}>
                 <Text style={styles.cancelText}>{t('common.cancel')}</Text>
               </Pressable>
             </View>
@@ -155,39 +177,32 @@ export default function LessonEditModal({ visible, lesson, color, isCustom = fal
               ))}
             </View>
 
-            <Text style={styles.label}>{t('lesson.title')}</Text>
-            <TextInput
-              style={styles.input}
+            <FloatingTextInput
+              label={t('lesson.title')}
               value={title}
               onChangeText={setTitle}
-              placeholder={t('lesson.titlePlaceholder')}
-              placeholderTextColor="#9CA3AF"
               returnKeyType="done"
-              multiline={false}
+              autoCapitalize="sentences"
             />
 
-            <Text style={styles.label}>{t('lesson.professor')}</Text>
-            <TextInput
-              style={styles.input}
+            <FloatingTextInput
+              label={t('lesson.professor')}
               value={professor}
               onChangeText={setProfessor}
-              placeholder={t('lesson.professorPlaceholder')}
-              placeholderTextColor="#9CA3AF"
               returnKeyType="done"
+              autoCapitalize="words"
             />
 
-            <Text style={styles.label}>{t('lesson.room')}</Text>
-            <TextInput
-              style={styles.input}
+            <FloatingTextInput
+              label={t('lesson.room')}
               value={room}
               onChangeText={setRoom}
-              placeholder={t('lesson.roomPlaceholder')}
-              placeholderTextColor="#9CA3AF"
               returnKeyType="done"
+              autoCapitalize="characters"
             />
 
             <Text style={styles.label}>{t('lesson.notes')}</Text>
-            <View style={[styles.noteBox, { height: noteBoxHeight }]}>
+            <View style={[styles.noteBox, { height: NOTE_BOX_MAX_H }]}>
               <ScrollView
                 style={styles.noteScroll}
                 nestedScrollEnabled
@@ -196,20 +211,14 @@ export default function LessonEditModal({ visible, lesson, color, isCustom = fal
               >
                 <TextInput
                   ref={noteInputRef}
-                  style={[styles.noteInput, { height: noteTextHeight }]}
+                  style={[styles.noteInput, { height: NOTE_BOX_MAX_H - 12 }]}
                   value={note}
                   onChangeText={setNote}
-                  onContentSizeChange={({ nativeEvent }) => {
-                    const contentHeight = Math.ceil(nativeEvent.contentSize.height + NOTE_INPUT_PADDING);
-                    const nextBoxHeight = Math.min(NOTE_BOX_MAX_H, Math.max(NOTE_BOX_MIN_H, contentHeight));
-                    setNoteTextHeight((currentHeight) => currentHeight === contentHeight ? currentHeight : contentHeight);
-                    setNoteBoxHeight((currentHeight) => currentHeight === nextBoxHeight ? currentHeight : nextBoxHeight);
-                  }}
                   placeholder={t('lesson.notePlaceholder')}
                   placeholderTextColor="#9CA3AF"
                   multiline
                   editable={noteEditing}
-                  scrollEnabled={false}
+                  scrollEnabled={true}
                   textAlignVertical="top"
                   onBlur={() => setNoteEditing(false)}
                 />
@@ -252,7 +261,7 @@ export default function LessonEditModal({ visible, lesson, color, isCustom = fal
 
 const styles = StyleSheet.create({
   overlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(17,24,39,0.45)' },
-  sheet: { maxHeight: '90%', flexShrink: 1, backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, paddingBottom: 28 },
+  sheet: { height: '75%', maxHeight: '85%', flexShrink: 1, backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, paddingBottom: 28 },
   modalHeader: { flexShrink: 0 },
   handle: { alignSelf: 'center', width: 40, height: 4, borderRadius: 2, backgroundColor: '#D1D5DB', marginBottom: 14 },
   titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 },
