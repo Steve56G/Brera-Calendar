@@ -13,13 +13,15 @@ import {
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import CourseColorSelector from './CourseColorSelector';
-import FloatingTextInput from './FloatingTextInput';
+import FloatingLabelInput, { FloatingLabel } from './FloatingLabelInput';
 import { DAYS } from '../constants/schedule';
 import { useTranslation } from '../i18n/LanguageProvider';
 
 const MIN_H = 8; // 08:00
 const MAX_H = 19; // 19:00
+const NOTE_BOX_MIN_H = 88;
 const NOTE_BOX_MAX_H = 124;
+const NOTE_INPUT_PADDING = 40;
 
 const fmt = (h) => `${String(Math.floor(h)).padStart(2, '0')}:${h % 1 ? '30' : '00'}`;
 
@@ -56,6 +58,7 @@ function TimeField({ label, value, onChange }) {
           placeholderTextColor="#9CA3AF"
           maxLength={5}
           selectTextOnFocus
+          accessibilityLabel={label}
         />
         <Pressable style={styles.stepBtn} onPress={() => step(0.5)} hitSlop={6} accessibilityLabel={t('lesson.plus30', { label })}>
           <Text style={styles.stepText}>+</Text>
@@ -79,6 +82,8 @@ export default function LessonEditModal({ visible, lesson, color, isCustom = fal
   const [professor, setProfessor] = useState(() => lesson?.professor || '');
   const [room, setRoom] = useState(() => lesson?.details || '');
   const [note, setNote] = useState(() => lesson?.note || '');
+  const [noteBoxHeight, setNoteBoxHeight] = useState(NOTE_BOX_MIN_H);
+  const [noteTextHeight, setNoteTextHeight] = useState(60);
   const [noteEditing, setNoteEditing] = useState(false);
   const noteInputRef = useRef(null);
   const [selectedColor, setSelectedColor] = useState(() => color || null);
@@ -86,31 +91,6 @@ export default function LessonEditModal({ visible, lesson, color, isCustom = fal
   const [startT, setStartT] = useState(() => lesson?.startLabel || fmt(lesson?.start ?? MIN_H));
   const [endT, setEndT] = useState(() => lesson?.endLabel || fmt(lesson?.end ?? MIN_H));
   const [error, setError] = useState('');
-
-  const isDirty =
-    title.trim() !== (lesson?.subject || '').trim() ||
-    professor.trim() !== (lesson?.professor || '').trim() ||
-    room.trim() !== (lesson?.details || '').trim() ||
-    note !== (lesson?.note || '') ||
-    selectedColor !== (color || null) ||
-    dayIndex !== (lesson?.dayIndex ?? 0) ||
-    startT !== (lesson?.startLabel || fmt(lesson?.start ?? MIN_H)) ||
-    endT !== (lesson?.endLabel || fmt(lesson?.end ?? MIN_H));
-
-  const handleClose = () => {
-    if (isDirty) {
-      Alert.alert(
-        t('lesson.unsavedTitle'),
-        t('lesson.unsavedMessage'),
-        [
-          { text: t('common.cancel'), style: 'cancel' },
-          { text: t('lesson.discard'), style: 'destructive', onPress: onCancel },
-        ]
-      );
-    } else {
-      onCancel();
-    }
-  };
 
   useEffect(() => {
     if (noteEditing) noteInputRef.current?.focus();
@@ -140,16 +120,16 @@ export default function LessonEditModal({ visible, lesson, color, isCustom = fal
   };
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={handleClose}>
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onCancel}>
       <SafeAreaProvider>
         <KeyboardAvoidingView style={styles.overlay} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-          <Pressable style={StyleSheet.absoluteFill} onPress={handleClose} />
+          <Pressable style={StyleSheet.absoluteFill} onPress={onCancel} />
           <SafeAreaView edges={['bottom']} style={styles.sheet}>
           <View style={styles.modalHeader}>
             <View style={styles.handle} />
             <View style={styles.titleRow}>
               <Text style={styles.heading}>{t('lesson.heading')}</Text>
-              <Pressable onPress={handleClose} hitSlop={10} accessibilityRole="button" accessibilityLabel={t('lesson.cancelClose')}>
+              <Pressable onPress={onCancel} hitSlop={10} accessibilityRole="button" accessibilityLabel={t('lesson.cancelClose')}>
                 <Text style={styles.cancelText}>{t('common.cancel')}</Text>
               </Pressable>
             </View>
@@ -177,32 +157,38 @@ export default function LessonEditModal({ visible, lesson, color, isCustom = fal
               ))}
             </View>
 
-            <FloatingTextInput
+            <FloatingLabelInput
+              containerStyle={styles.inputContainer}
               label={t('lesson.title')}
               value={title}
               onChangeText={setTitle}
               returnKeyType="done"
-              autoCapitalize="sentences"
+              multiline={false}
             />
 
-            <FloatingTextInput
+            <FloatingLabelInput
+              containerStyle={styles.inputContainer}
               label={t('lesson.professor')}
               value={professor}
               onChangeText={setProfessor}
               returnKeyType="done"
-              autoCapitalize="words"
             />
 
-            <FloatingTextInput
+            <FloatingLabelInput
+              containerStyle={styles.inputContainer}
               label={t('lesson.room')}
               value={room}
               onChangeText={setRoom}
               returnKeyType="done"
-              autoCapitalize="characters"
             />
 
-            <Text style={styles.label}>{t('lesson.notes')}</Text>
-            <View style={[styles.noteBox, { height: NOTE_BOX_MAX_H }]}>
+            <View style={[styles.noteBox, { height: noteBoxHeight }]}>
+              <FloatingLabel
+                label={t('lesson.notes')}
+                floated={noteEditing || note.length > 0}
+                style={styles.noteFloatingLabel}
+                restingTranslateY={15}
+              />
               <ScrollView
                 style={styles.noteScroll}
                 nestedScrollEnabled
@@ -211,14 +197,19 @@ export default function LessonEditModal({ visible, lesson, color, isCustom = fal
               >
                 <TextInput
                   ref={noteInputRef}
-                  style={[styles.noteInput, { height: NOTE_BOX_MAX_H - 12 }]}
+                  style={[styles.noteInput, { height: noteTextHeight }]}
+                  accessibilityLabel={t('lesson.notes')}
                   value={note}
                   onChangeText={setNote}
-                  placeholder={t('lesson.notePlaceholder')}
-                  placeholderTextColor="#9CA3AF"
+                  onContentSizeChange={({ nativeEvent }) => {
+                    const contentHeight = Math.ceil(nativeEvent.contentSize.height + NOTE_INPUT_PADDING);
+                    const nextBoxHeight = Math.min(NOTE_BOX_MAX_H, Math.max(NOTE_BOX_MIN_H, contentHeight));
+                    setNoteTextHeight((currentHeight) => currentHeight === contentHeight ? currentHeight : contentHeight);
+                    setNoteBoxHeight((currentHeight) => currentHeight === nextBoxHeight ? currentHeight : nextBoxHeight);
+                  }}
                   multiline
                   editable={noteEditing}
-                  scrollEnabled={true}
+                  scrollEnabled={false}
                   textAlignVertical="top"
                   onBlur={() => setNoteEditing(false)}
                 />
@@ -261,7 +252,7 @@ export default function LessonEditModal({ visible, lesson, color, isCustom = fal
 
 const styles = StyleSheet.create({
   overlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(17,24,39,0.45)' },
-  sheet: { height: '75%', maxHeight: '85%', flexShrink: 1, backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, paddingBottom: 28 },
+  sheet: { maxHeight: '90%', flexShrink: 1, backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, paddingBottom: 28 },
   modalHeader: { flexShrink: 0 },
   handle: { alignSelf: 'center', width: 40, height: 4, borderRadius: 2, backgroundColor: '#D1D5DB', marginBottom: 14 },
   titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 },
@@ -269,10 +260,27 @@ const styles = StyleSheet.create({
   cancelText: { fontSize: 14, fontWeight: '600', color: '#2563EB' },
   fieldsScroll: { flexShrink: 1 },
   fieldsContent: { paddingBottom: 4 },
-  label: { fontSize: 12, fontWeight: '600', color: '#6B7280', marginBottom: 6 },
-  input: {
-    backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 12,
-    paddingHorizontal: 14, paddingVertical: 12, fontSize: 16, color: '#111827', marginBottom: 16,
+  label: { fontSize: 12, fontWeight: '600', color: '#6B7280', marginBottom: 6 , color: "#2563EB"},
+  inputContainer: {
+    height: 58,
+    backgroundColor: '#F9FAFB',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 12,
+    marginBottom: 16,
+  },
+  timeInput: {
+    flex: 1,
+    height: 44,
+    textAlign: 'center',
+    backgroundColor: '#F9FAFB',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 10,
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#111827',
+    paddingVertical: 0,
   },
   daysRow: { flexDirection: 'row', gap: 6, marginBottom: 16 },
   dayButton: { flex: 1, alignItems: 'center', paddingVertical: 8, borderRadius: 9, backgroundColor: '#F3F4F6', borderWidth: 1, borderColor: '#E5E7EB' },
@@ -288,16 +296,13 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   noteScroll: { flex: 1 },
-  noteInput: { paddingHorizontal: 14, paddingVertical: 12, fontSize: 16, lineHeight: 20, color: '#111827' },
+  noteFloatingLabel: { left: 14, top: 4 },
+  noteInput: { paddingHorizontal: 14, paddingTop: 28, paddingBottom: 12, fontSize: 16, lineHeight: 20, color: '#111827' },
   timeRow: { flexDirection: 'row', gap: 12 },
   timeCol: { flex: 1 },
   stepper: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   stepBtn: { width: 38, height: 44, borderRadius: 10, backgroundColor: '#DBEAFE', alignItems: 'center', justifyContent: 'center' },
   stepText: { fontSize: 20, fontWeight: '700', color: '#1E3A8A' },
-  timeInput: {
-    flex: 1, height: 44, textAlign: 'center', backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB',
-    borderRadius: 10, fontSize: 16, fontWeight: '600', color: '#111827', paddingVertical: 0,
-  },
   error: { color: '#B91C1C', fontSize: 13, marginTop: 12 },
   actions: { flexDirection: 'row', gap: 12, marginTop: 16, flexShrink: 0 },
   btn: { flex: 1, borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
@@ -306,6 +311,9 @@ const styles = StyleSheet.create({
   btnPrimary: { backgroundColor: '#2563EB' },
   btnPrimaryText: { color: '#fff', fontSize: 16, fontWeight: '700' },
 });
+
+
+
 
 
 

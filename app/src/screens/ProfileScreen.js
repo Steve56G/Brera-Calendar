@@ -13,7 +13,7 @@ import {
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from '../i18n/LanguageProvider';
-import FloatingTextInput from '../components/FloatingTextInput';
+import FloatingLabelInput from '../components/FloatingLabelInput';
 
 const EMPTY_PROFILE = {
   firstName: '',
@@ -81,20 +81,20 @@ export default function ProfileScreen({ visible, profile, onClose, onSave }) {
             >
               {FIELDS.map(({ key, keyboardType, autoCapitalize, maxLength }) => {
                 const label = t(`profile.${key}`);
-                const value = form[key] || '';
-
                 return (
-                  <FloatingTextInput
-                    key={key}
+                <View key={key} style={styles.field}>
+                  <FloatingLabelInput
+                    containerStyle={styles.input}
                     label={label}
-                    value={value}
-                    onChangeText={(text) => setForm((current) => ({ ...current, [key]: text }))}
+                    value={form[key] || ''}
+                    onChangeText={(value) => setForm((current) => ({ ...current, [key]: value }))}
                     keyboardType={keyboardType || 'default'}
                     autoCapitalize={autoCapitalize || 'words'}
                     autoCorrect={key !== 'institutionalEmail'}
                     returnKeyType="next"
                     maxLength={maxLength}
                   />
+                </View>
                 );
               })}
               <Pressable style={({ pressed }) => [styles.saveBtn, pressed && { opacity: 0.85 }]} onPress={save}>
@@ -111,29 +111,28 @@ export default function ProfileScreen({ visible, profile, onClose, onSave }) {
 const TOP = Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + 12 : 56;
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#F9FAFB' },
-  content: { flex: 1, paddingTop: TOP, paddingHorizontal: 20 },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 },
+  root: { flex: 1, backgroundColor: '#F3F4F6' },
+  content: { flex: 1, paddingTop: TOP, paddingHorizontal: 16 },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 },
   backBtn: { width: 90 },
   backContent: { flexDirection: 'row', alignItems: 'center' },
   backText: { color: '#2563EB', fontSize: 16, fontWeight: '600' },
-  headerTitle: { fontSize: 20, fontWeight: '800', color: '#111827' },
-  form: { gap: 16, paddingBottom: 24 },
-  saveBtn: {
-    backgroundColor: '#2563EB',
-    borderRadius: 14,
-    paddingVertical: 16,
-    alignItems: 'center',
-    marginTop: 8,
-    marginBottom: 16,
-    shadowColor: '#2563EB',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
+  headerTitle: { fontSize: 18, fontWeight: '800', color: '#111827' },
+  form: { gap: 14, paddingBottom: 20 },
+  field: {},
+  input: {
+    height: 64,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
   },
-  saveText: { color: '#fff', fontSize: 16, fontWeight: '700', letterSpacing: 0.2 },
+  saveBtn: { backgroundColor: '#2563EB', borderRadius: 12, paddingVertical: 14, alignItems: 'center', marginBottom: 12 },
+  saveText: { color: '#fff', fontSize: 16, fontWeight: '700' },
 });
+
+
+
 
 
 
