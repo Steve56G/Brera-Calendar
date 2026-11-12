@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { FlatList, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { DAYS } from '../constants/schedule';
 import { useTranslation } from '../i18n/LanguageProvider';
@@ -6,7 +6,7 @@ import { norm } from '../utils/parser';
 import { buildRoomIndex, SLOT_HOURS } from '../services/roomAvailability';
 
 const pad = (h) => `${String(h).padStart(2, '0')}:00`;
-const todayIndex = () => {
+export const getTodayIndex = () => {
   const d = new Date().getDay(); // 0 = domenica
   return d === 0 ? 0 : Math.min(d - 1, 5);
 };
@@ -98,11 +98,8 @@ function HourGrid({ slots }) {
 
 /* ------------------------------ Schermata ------------------------------ */
 
-export default function RoomAvailabilityScreen({ schedule }) {
+export default function RoomAvailabilityScreen({ schedule, query, onQuery, selected, onSelect, day, onDay }) {
   const { t, dayName, room: roomText } = useTranslation();
-  const [query, setQuery] = useState('');
-  const [selected, setSelected] = useState(null);
-  const [day, setDay] = useState(todayIndex);
 
   const index = useMemo(() => buildRoomIndex(schedule), [schedule]);
 
@@ -132,8 +129,8 @@ export default function RoomAvailabilityScreen({ schedule }) {
 
   return (
     <View style={{ flex: 1 }}>
-      <RoomSearch query={query} onQuery={setQuery} rooms={matches} selected={room} onSelect={setSelected} />
-      <DaySelector day={day} onDay={setDay} />
+      <RoomSearch query={query} onQuery={onQuery} rooms={matches} selected={room} onSelect={onSelect} />
+      <DaySelector day={day} onDay={onDay} />
 
       {!room ? (
         <View style={styles.center}>
@@ -176,6 +173,4 @@ const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 },
   hint: { color: '#6B7280', fontSize: 14, textAlign: 'center' },
 });
-
-
 

@@ -20,7 +20,7 @@ import { parseSchedule, norm } from './utils/parser';
 import ScheduleCard from './components/ScheduleCard';
 import TabBar from './navigation/TabBar';
 import CalendarScreen from './screens/CalendarScreen';
-import RoomAvailabilityScreen from './screens/RoomAvailabilityScreen';
+import RoomAvailabilityScreen, { getTodayIndex } from './screens/RoomAvailabilityScreen';
 import { migrateChanges, migrateCourseColors, migrateEdits, migrateSchedule } from './services/migrations';
 import { usePersistentState, setCodec, clearCalendarData } from './services/storage';
 import SettingsScreen from './screens/SettingsScreen';
@@ -107,6 +107,9 @@ function AppContent() {
   const [pdfB64, setPdfB64] = useState(null);
   const [schedule, setSchedule, scheduleLoaded] = usePersistentState('schedule', [], { decode: migrateSchedule });
   const [query, setQuery] = useState('');
+  const [roomQuery, setRoomQuery] = useState('');
+  const [selectedRoom, setSelectedRoom] = useState(null);
+  const [roomDay, setRoomDay] = useState(getTodayIndex);
   const deferredQuery = useDeferredValue(query);
   const [tab, setTab] = useState('calendar'); // 'list' | 'calendar' | 'rooms' -- il Calendario è la schermata iniziale
   const [showSettings, setShowSettings] = useState(false);
@@ -562,7 +565,17 @@ function AppContent() {
         </>
       )}
 
-      {tab === 'rooms' && <RoomAvailabilityScreen schedule={schedule} />}
+      {tab === 'rooms' && (
+        <RoomAvailabilityScreen
+          schedule={schedule}
+          query={roomQuery}
+          onQuery={setRoomQuery}
+          selected={selectedRoom}
+          onSelect={setSelectedRoom}
+          day={roomDay}
+          onDay={setRoomDay}
+        />
+      )}
 
       {tab === 'calendar' && <CalendarScreen schedule={schedule} favorites={favorites} onToggle={toggleFav} edits={edits} courseColors={courseColors} onEdit={editLesson} onSetCourseColor={setCourseColor} />}
 
