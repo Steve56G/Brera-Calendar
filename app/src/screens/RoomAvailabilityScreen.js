@@ -80,10 +80,14 @@ function HourGrid({ slots }) {
           <View style={styles.slotArea}>
             {lessons.length > 0 && (
               <View style={styles.busyBox}>
-                <Text style={styles.busyTitle} numberOfLines={1}>
-                  {lessons[0].subject}
-                  {lessons.length > 1 ? `  +${lessons.length - 1}` : ''}
-                </Text>
+                <View style={styles.busyHeading}>
+                  <Text style={styles.busyTitle} numberOfLines={1}>
+                    {lessons[0].subject}
+                  </Text>
+                  {lessons.length > 1 && (
+                    <Text style={styles.busyCount}>+{lessons.length - 1}</Text>
+                  )}
+                </View>
                 <Text style={styles.busyTime}>
                   {lessons[0].startLabel} – {lessons[0].endLabel}
                 </Text>
@@ -168,9 +172,10 @@ const styles = StyleSheet.create({
   hourLabel: { width: 46, fontSize: 11, fontWeight: '600', color: '#6B7280', paddingTop: 4 },
   slotArea: { flex: 1, paddingVertical: 2 },
   busyBox: { flex: 1, backgroundColor: '#2563EB', borderRadius: 8, paddingHorizontal: 10, justifyContent: 'center' },
-  busyTitle: { color: '#fff', fontSize: 13, fontWeight: '700' },
+  busyHeading: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  busyTitle: { flex: 1, minWidth: 0, color: '#fff', fontSize: 13, fontWeight: '700' },
+  busyCount: { flexShrink: 0, color: '#fff', fontSize: 13, fontWeight: '700' },
   busyTime: { color: '#DBEAFE', fontSize: 11, marginTop: 1 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 },
   hint: { color: '#6B7280', fontSize: 14, textAlign: 'center' },
 });
-
